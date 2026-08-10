@@ -1,0 +1,20 @@
+.env
+!.env.example
+
+painel-backend/vendor/
+painel-backend/.env
+painel-backend/storage/*.key
+painel-backend/database/*.sqlite
+
+painel-frontend/node_modules/
+painel-frontend/.angular/
+painel-frontend/dist/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Sistema
+.DS_Store
+painel-backend/.phpunit.result.cache
