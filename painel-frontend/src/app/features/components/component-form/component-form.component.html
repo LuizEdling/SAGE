@@ -1,0 +1,87 @@
+<app-page-header eyebrow="Conhecimento" [title]="id ? 'Editar módulo' : 'Novo módulo'" />
+
+@if (loading()) {
+  <div class="card"><p>Carregando...</p></div>
+} @else {
+  <form class="card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-field">
+      <label for="name">Nome</label>
+      <input id="name" formControlName="name" placeholder="Faturamento" />
+    </div>
+
+    <div class="form-field">
+      <label for="description">
+        Descrição
+        <span class="tooltip" tabindex="0">
+          ?
+          <span class="tooltip-text">
+            Descreva a área de negócio que o módulo cobre. O Agente usa essa descrição para enquadrar a pergunta do
+            usuário no módulo certo antes de buscar na base de conhecimento.
+          </span>
+        </span>
+      </label>
+      <textarea
+        id="description"
+        formControlName="description"
+        rows="3"
+        placeholder="Emissão de notas fiscais, faturamento de pedidos e integração com o provedor fiscal."
+      ></textarea>
+    </div>
+
+    <div class="form-field">
+      <label for="route">
+        Rota no sistema
+        <span class="tooltip" tabindex="0">
+          ?
+          <span class="tooltip-text">
+            Caminho de menu ou URL onde o módulo fica no sistema legado. O Agente cita esse caminho ao orientar o
+            usuário sobre onde encontrar a tela.
+          </span>
+        </span>
+      </label>
+      <input id="route" formControlName="route" placeholder="Vendas > Faturamento > Emissão de NF" />
+    </div>
+
+    <div class="form-field">
+      <label>
+        Prints de acesso
+        <span class="tooltip" tabindex="0">
+          ?
+          <span class="tooltip-text">
+            Prints de tela mostrando onde esse módulo está localizado no sistema. Ajudam o usuário e o Agente a
+            identificar visualmente a área correta.
+          </span>
+        </span>
+      </label>
+
+      @if (images().length > 0 || pendingImages().length > 0) {
+        <div class="image-attachments">
+          @for (image of images(); track image.id) {
+            <div class="image-attachment">
+              <img [src]="image.url" [alt]="image.caption ?? 'Imagem do módulo'" />
+              <button type="button" class="remove-image" (click)="removeImage(image)">×</button>
+            </div>
+          }
+          @for (pending of pendingImages(); track pending.previewUrl) {
+            <div class="image-attachment">
+              <img [src]="pending.previewUrl" alt="Imagem selecionada" />
+              <button type="button" class="remove-image" (click)="removePendingImage(pending)">×</button>
+              <div class="image-caption">Será enviada ao salvar</div>
+            </div>
+          }
+        </div>
+      }
+
+      <input type="file" accept="image/*" multiple (change)="onImagesSelected($event)" [disabled]="uploading()" />
+
+      @if (uploading()) {
+        <p class="text-muted">Enviando imagens...</p>
+      }
+    </div>
+
+    <div class="form-actions-spaced">
+      <button class="btn" type="submit" [disabled]="saving() || uploading()">Salvar</button>
+      <a class="btn btn-secondary" routerLink="/modulos">Cancelar</a>
+    </div>
+  </form>
+}
