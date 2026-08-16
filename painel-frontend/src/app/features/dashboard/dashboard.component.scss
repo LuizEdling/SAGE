@@ -1,0 +1,84 @@
+.pipeline-card {
+  margin-bottom: 1.25rem;
+}
+
+.pipeline-title {
+  margin: 0 0 1.25rem;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sage-text-muted);
+}
+
+.pipeline {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.pipeline-value {
+  font-family: var(--font-mono);
+  font-size: 2.4rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--sage-text);
+}
+
+.pipeline-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sage-text-muted);
+}
+
+.pipeline-arrow {
+  flex: 1;
+  max-width: 80px;
+  height: 1px;
+  align-self: center;
+  margin-top: -0.9rem;
+  background: repeating-linear-gradient(90deg, var(--sage-border-strong) 0 4px, transparent 4px 8px);
+}
+
+.pipeline-step-signal {
+  .pipeline-value {
+    color: var(--sage-signal);
+  }
+}
+
+.dashboard-secondary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.dashboard-mini-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mini-stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--sage-text);
+}
+
+.mini-stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sage-text-muted);
+}
