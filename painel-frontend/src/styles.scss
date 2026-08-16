@@ -1,0 +1,1012 @@
+@import '@fontsource/ibm-plex-sans/400.css';
+@import '@fontsource/ibm-plex-sans/600.css';
+@import '@fontsource/ibm-plex-sans/700.css';
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';
+
+:root {
+  // Direção "diagnóstico de engenharia": papel de projeto técnico (frio, não
+  // creme) + tinta azul-marinho + cobre pra ação humana + roxo só pro Agente.
+  --sage-field: #e9eef3;
+  --sage-surface: #ffffff;
+  --sage-border: #c3d0dc;
+  --sage-border-strong: #94a8ba;
+  --sage-text: #14243a;
+  --sage-text-muted: #5c6f82;
+
+  --sage-action: #a8571e;
+  --sage-action-dark: #8a4517;
+
+  // Roxo reservado exclusivamente para "isto veio do Agente" — nunca decoração.
+  --sage-signal: #5b21b6;
+  --sage-signal-bg: rgba(91, 33, 182, 0.08);
+
+  --sage-sidebar-bg: #0f2038;
+  --sage-sidebar-text: #c9d6e2;
+  --sage-sidebar-text-muted: #7e93a8;
+
+  --sage-danger: #b91c1c;
+  --sage-danger-bg: #fbe5e5;
+  --sage-warning: #92400e;
+  --sage-warning-bg: #fbeee0;
+  --sage-success: #1f7a4d;
+  --sage-success-bg: #e3f3e9;
+
+  --sage-radius: 2px;
+  --sage-radius-sm: 2px;
+
+  --font-display: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-body: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --fs-display: 1.75rem;
+  --fs-h2: 1.125rem;
+  --fs-body: 0.875rem;
+  --fs-meta: 0.75rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--sage-field);
+  color: var(--sage-text);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+}
+
+a {
+  color: var(--sage-action);
+  cursor: pointer;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-display);
+}
+
+.page-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-display);
+  letter-spacing: -0.02em;
+  color: var(--sage-text);
+}
+
+:focus-visible {
+  outline: 2px solid var(--sage-action);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+.pill-badge {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(168, 87, 30, 0.1);
+  color: var(--sage-action-dark);
+  border: 1px solid rgba(168, 87, 30, 0.25);
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+// Cartão "ficha técnica": sem sombra, cantos quase retos, com marcas de
+// registro nos cantos (como um desenho técnico) em vez de decoração.
+.card {
+  position: relative;
+  background: var(--sage-surface);
+  border: 1px solid var(--sage-border);
+  border-radius: var(--sage-radius);
+  padding: 1.5rem;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    border-color: var(--sage-border-strong);
+    border-style: solid;
+  }
+
+  &::before {
+    top: -1px;
+    left: -1px;
+    border-width: 1.5px 0 0 1.5px;
+  }
+
+  &::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 1.5px 1.5px 0;
+  }
+}
+
+// Cards em sequência (ex.: seções de uma página) nunca encostam um no outro.
+.card + .card {
+  margin-top: 1.5rem;
+}
+
+// Tabela mais larga que a tela rola dentro do card em vez de vazar para fora.
+// O recorte do overflow esconderia os cantos desenhados sobre a borda, então
+// neles os cantos ficam rentes ao lado de dentro.
+.card:has(table) {
+  overflow-x: auto;
+
+  &::before {
+    top: 0;
+    left: 0;
+  }
+
+  &::after {
+    bottom: 0;
+    right: 0;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--sage-radius-sm);
+  padding: 0.55rem 1.1rem;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--sage-action);
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--sage-action-dark);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--sage-text);
+  border-color: var(--sage-border);
+
+  &:hover {
+    background: var(--sage-field);
+  }
+}
+
+.btn-danger {
+  background: var(--sage-danger);
+
+  &:hover {
+    background: #991b1b;
+  }
+}
+
+.btn-sm {
+  padding: 0.3rem 0.7rem;
+  font-size: 12px;
+
+  svg {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+.tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: var(--sage-border);
+  color: var(--sage-text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: help;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+
+  .tooltip-text {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 140%;
+    left: 0;
+    background: #1e293b;
+    color: #fff;
+    padding: 0.5rem 0.7rem;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    width: 230px;
+    z-index: 20;
+    transition: opacity 0.15s ease;
+    pointer-events: none;
+  }
+
+  &:hover .tooltip-text,
+  &:focus .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+  }
+}
+
+.form-actions-spaced {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.image-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+
+  .image-attachment {
+    position: relative;
+    width: 96px;
+
+    img {
+      width: 96px;
+      height: 72px;
+      object-fit: cover;
+      border-radius: var(--sage-radius-sm);
+      border: 1px solid var(--sage-border);
+      display: block;
+    }
+
+    .remove-image {
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--sage-danger);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      line-height: 1;
+    }
+
+    .image-caption {
+      font-size: 11px;
+      color: var(--sage-text-muted);
+      margin-top: 0.25rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 1.1rem;
+
+  label {
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  input,
+  select,
+  textarea {
+    border: 1px solid var(--sage-border);
+    border-radius: var(--sage-radius-sm);
+    padding: 0.55rem 0.7rem;
+    font-size: 14px;
+    font-family: inherit;
+
+    &:focus {
+      outline: none;
+      border-color: var(--sage-action);
+      box-shadow: 0 0 0 3px rgba(168, 87, 30, 0.12);
+    }
+  }
+
+  // O select nativo vem com fundo cinza e altura diferente dos inputs.
+  select {
+    background-color: var(--sage-surface);
+    color: var(--sage-text);
+    min-height: 2.4rem;
+  }
+
+  input[type='file'] {
+    padding: 0.45rem 0.7rem;
+    color: var(--sage-text-muted);
+    cursor: pointer;
+  }
+
+  .field-hint {
+    color: var(--sage-text-muted);
+    font-size: 12px;
+    margin: 0.35rem 0 0;
+  }
+}
+
+// Lista de funções selecionáveis (vínculo conhecimento ↔ função): uma linha
+// por função, com o tipo de operação ao lado do nome.
+.function-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--sage-border);
+  border-radius: var(--sage-radius-sm);
+}
+
+.function-check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 400;
+  cursor: pointer;
+
+  .field-hint {
+    margin: 0;
+  }
+}
+
+// "Recomendar funções": sugestões do Agente com o motivo e a ação "Vincular".
+.function-recommend {
+  margin-top: 0.5rem;
+}
+
+.function-check.is-suggestion {
+  justify-content: space-between;
+  cursor: default;
+}
+
+// Mensagem de erro de formulário ou de ação; global porque também aparece
+// fora de .form-field (ex.: resultado de importação).
+.field-error {
+  color: var(--sage-danger);
+  font-size: 12px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--sage-border);
+    font-size: 13px;
+  }
+
+  th {
+    color: var(--sage-text-muted);
+    font-family: var(--font-mono);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+  }
+
+  tbody tr:hover {
+    background: var(--sage-field);
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+// Corta texto longo com "..." em vez de esticar a coluna/quebrar o layout da
+// tabela. Uso: <span class="truncate" style="max-width: 260px">{{ valor }}</span>
+// — o max-width é definido no local de uso porque cada coluna precisa de um
+// limite diferente.
+.icon-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  color: var(--sage-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    background: var(--sage-field);
+    color: var(--sage-text);
+  }
+
+  &.icon-btn-danger:hover {
+    background: var(--sage-danger-bg);
+    color: var(--sage-danger);
+  }
+
+  &.icon-btn-success:hover {
+    background: var(--sage-success-bg);
+    color: var(--sage-success);
+  }
+}
+
+.th-with-help {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.icon-help {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: var(--sage-text-muted);
+  cursor: help;
+  flex-shrink: 0;
+
+  svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  &:hover .icon-help-tooltip,
+  &:focus-visible .icon-help-tooltip {
+    opacity: 1;
+    visibility: visible;
+  }
+}
+
+.icon-help-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 240px;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--sage-radius-sm);
+  background: var(--sage-text);
+  color: var(--sage-surface);
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.35;
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  white-space: normal;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.truncate {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+code {
+  font-family: var(--font-mono);
+  color: var(--sage-text-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+// Bloco de código maior (exemplo de arquivo, prompt) — diferente do `code`
+// inline acima. Usar dentro de `.code-block-wrapper` quando precisar do botão
+// de copiar posicionado no canto.
+.code-block {
+  display: block;
+  margin: 0;
+  padding: 0.9rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--sage-text);
+  background: var(--sage-field);
+  border: 1px solid var(--sage-border);
+  border-left: 3px solid var(--sage-action);
+  border-radius: var(--sage-radius-sm);
+  white-space: pre-wrap;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 320px;
+}
+
+.code-block-wrapper {
+  position: relative;
+}
+
+.copy-button {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+// Valor voltado à máquina: rotas, chaves, ids, scores. Usar sempre que o dado
+// exibido é "para o sistema ler", não prosa — reforça a trilha de evidência.
+.mono-value {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  letter-spacing: -0.01em;
+}
+
+// Estado "está no Qdrant" — reaproveita o roxo de sinal do Agente, já que é
+// o Agente quem consome esse índice.
+.indexed-indicator {
+  display: inline-flex;
+  align-items: center;
+  color: var(--sage-text-muted);
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  &.is-indexed {
+    color: var(--sage-signal);
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 0.15rem;
+    font-size: 15px;
+  }
+}
+
+.section-subtitle {
+  margin: 0;
+  color: var(--sage-text-muted);
+  font-size: 13px;
+}
+
+.section-actions {
+  margin-bottom: 1rem;
+}
+
+.type-pill {
+  white-space: nowrap;
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid #bfdbfe;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.tab-filters {
+  display: inline-flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--sage-field);
+  border: 1px solid var(--sage-border);
+  border-radius: var(--sage-radius-sm);
+  margin-bottom: 1rem;
+
+  a {
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sage-text-muted);
+    text-decoration: none;
+
+    &.active {
+      background: var(--sage-action);
+      color: #fff;
+    }
+  }
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 38px;
+  height: 20px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  border: none;
+  padding: 0;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: #fff;
+    transition: transform 0.15s ease;
+  }
+
+  &.on {
+    background: var(--sage-action);
+
+    &::after {
+      transform: translateX(18px);
+    }
+  }
+}
+
+.form-timeline {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+
+.form-timeline-step {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--sage-text-muted);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: default;
+  font-family: inherit;
+
+  .step-circle {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border-radius: 999px;
+    border: 2px solid var(--sage-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--sage-text-muted);
+    background: var(--sage-surface);
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  &.is-completed {
+    color: var(--sage-text);
+    cursor: pointer;
+
+    .step-circle {
+      background: var(--sage-action);
+      border-color: var(--sage-action);
+      color: #fff;
+    }
+  }
+
+  &.is-active {
+    color: var(--sage-text);
+
+    .step-circle {
+      border-color: var(--sage-action);
+      color: var(--sage-action);
+    }
+  }
+}
+
+.form-timeline-line {
+  flex: 1;
+  height: 2px;
+  background: var(--sage-border);
+  margin: 0 0.85rem;
+
+  &.is-completed {
+    background: var(--sage-action);
+  }
+}
+
+.tip-box {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  background: var(--sage-field);
+  border: 1px solid var(--sage-border);
+  border-left: 3px solid var(--sage-action);
+  border-radius: var(--sage-radius-sm);
+  padding: 0.8rem 1rem;
+  margin-bottom: 1.25rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sage-text);
+
+  .tip-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    color: var(--sage-action-dark);
+    margin-top: 0.1rem;
+  }
+
+  // Só o título da dica (primeiro <strong>) vai em linha própria; destaques
+  // no meio do texto continuam em linha.
+  strong:first-child {
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+}
+
+.badge {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.7rem;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: currentColor;
+  }
+
+  &.status-pendente {
+    background: var(--sage-warning-bg);
+    color: var(--sage-warning);
+  }
+  &.status-aprovado {
+    background: var(--sage-success-bg);
+    color: var(--sage-success);
+  }
+  &.status-reprovado {
+    background: var(--sage-danger-bg);
+    color: var(--sage-danger);
+  }
+
+  // Conversa do chat: aberta em andamento, encerrada (pelo usuário ou por
+  // inatividade) fica neutra — não é erro, é histórico.
+  &.status-aberta {
+    background: var(--sage-success-bg);
+    color: var(--sage-success);
+  }
+  &.status-encerrada {
+    background: var(--sage-field);
+    color: var(--sage-text-muted);
+  }
+
+  // Execução de função no sistema legado.
+  &.status-autorizada {
+    background: var(--sage-warning-bg);
+    color: var(--sage-warning);
+  }
+  &.status-executada {
+    background: var(--sage-success-bg);
+    color: var(--sage-success);
+  }
+  &.status-falhou {
+    background: var(--sage-danger-bg);
+    color: var(--sage-danger);
+  }
+  &.status-negada {
+    background: var(--sage-field);
+    color: var(--sage-text-muted);
+  }
+
+  // Papel do usuário: cobre pra quem tem poder de gestão, neutro pro usuário
+  // comum. Mesma pílula do status pra tag não virar um dialeto só dela.
+  &.role-master {
+    background: rgba(168, 87, 30, 0.1);
+    color: var(--sage-action-dark);
+  }
+  &.role-user {
+    background: var(--sage-field);
+    color: var(--sage-text-muted);
+  }
+}
+
+// Bolhas de conversa (usuário × Agente) — usadas na simulação de atendimento
+// e no detalhe da conversa. A borda roxa marca o que veio do Agente.
+.chat-bubble {
+  max-width: 70%;
+  padding: 0.75rem 1rem;
+  border-radius: var(--sage-radius);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.chat-bubble-user {
+  align-self: flex-end;
+  background: var(--sage-action);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble-agent {
+  align-self: flex-start;
+  background: var(--sage-field);
+  border: 1px solid var(--sage-border);
+  border-left: 3px solid var(--sage-signal);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bubble-loading {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+.chat-bubble-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--sage-border);
+}
+
+.chat-bubble-resource {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--sage-border);
+
+  code {
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+}
+
+.chat-bubble-resource-label {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--sage-signal);
+}
+
+.chat-bubble-resource-images {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  img {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border: 1px solid var(--sage-border);
+    border-radius: var(--sage-radius-sm);
+  }
+}
+
+// Botão "Escolher arquivo" no padrão dos botões secundários.
+input[type='file']::file-selector-button {
+  margin-right: 0.75rem;
+  padding: 0.35rem 0.8rem;
+  border: 1px solid var(--sage-border);
+  border-radius: var(--sage-radius-sm);
+  background: transparent;
+  color: var(--sage-text);
+  font: 600 13px var(--font-body);
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--sage-field);
+  }
+}
+
+// Select solto (filtros fora de .form-field), no mesmo padrão dos campos.
+.filter-select {
+  border: 1px solid var(--sage-border);
+  border-radius: var(--sage-radius-sm);
+  padding: 0.45rem 0.7rem;
+  min-height: 2.25rem;
+  font-size: 13px;
+  font-family: inherit;
+  background-color: var(--sage-surface);
+  color: var(--sage-text);
+  cursor: pointer;
+
+  &:focus {
+    outline: none;
+    border-color: var(--sage-action);
+    box-shadow: 0 0 0 3px rgba(168, 87, 30, 0.12);
+  }
+}
+
+// Grupo de botões no cabeçalho da página (sem a margem dos botões de formulário).
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+// Itens do diagnóstico interno separados por um ponto médio.
+.chat-bubble-meta > span + span::before {
+  content: '·';
+  margin-right: 0.5rem;
+  color: var(--sage-text-muted);
+}
+
+.card > .tip-box:last-child {
+  margin-bottom: 0;
+}
+
+.type-note {
+  display: block;
+  margin: 0.25rem 0 0;
+  font-size: 12px;
+  color: var(--sage-text-muted);
+}

@@ -1,0 +1,327 @@
+<app-page-header eyebrow="Base de conhecimento" [title]="id ? 'Editar conhecimento' : 'Novo conhecimento'" />
+
+<form class="card" [formGroup]="form" (ngSubmit)="submit()">
+  <div class="form-timeline">
+    <button
+      type="button"
+      class="form-timeline-step"
+      [class.is-completed]="currentStep() === 2"
+      [class.is-active]="currentStep() === 1"
+      (click)="goToStep1()"
+    >
+      <span class="step-circle">
+        @if (currentStep() === 2) {
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        } @else {
+          1
+        }
+      </span>
+      Módulo
+    </button>
+
+    <span class="form-timeline-line" [class.is-completed]="currentStep() === 2"></span>
+
+    <div class="form-timeline-step" [class.is-active]="currentStep() === 2">
+      <span class="step-circle">2</span>
+      Conhecimento
+    </div>
+  </div>
+
+  @if (currentStep() === 1) {
+    <div class="tip-box">
+      <svg
+        class="tip-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </svg>
+      <div>
+        <strong>Onde esse conhecimento vive no sistema legado?</strong>
+        Escolha o módulo já cadastrado ou crie um novo. A rota (ex: <code>/erp/faturamento</code>) e
+        um print de tela ajudam o Agente a indicar exatamente onde o usuário deve ir para resolver o
+        problema.
+      </div>
+    </div>
+
+    <div class="tab-filters" style="margin-bottom: 1rem">
+      <a (click)="setModuleMode('existing')" [class.active]="moduleMode() === 'existing'"
+        >Selecionar módulo existente</a
+      >
+      <a (click)="setModuleMode('new')" [class.active]="moduleMode() === 'new'">+ Novo módulo</a>
+    </div>
+
+    @if (moduleMode() === 'existing') {
+      <div class="form-field">
+        <label for="component_id">Módulo</label>
+        <select
+          id="component_id"
+          [value]="form.controls.component_id.value ?? ''"
+          (change)="onModuleSelected($event)"
+        >
+          <option value="">Selecione...</option>
+          @for (c of components(); track c.id) {
+            <option [value]="c.id">{{ c.name }}</option>
+          }
+        </select>
+      </div>
+
+      @if (form.controls.component_id.value) {
+        <p class="section-subtitle" style="margin-top: -0.6rem; margin-bottom: 1.1rem">
+          {{ moduloForm.controls.description.value }}
+        </p>
+      }
+    } @else {
+      <div class="form-field">
+        <label for="modulo_name">Nome do módulo</label>
+        <input id="modulo_name" [formControl]="moduloForm.controls.name" />
+      </div>
+
+      <div class="form-field">
+        <label for="modulo_description">Descrição do módulo</label>
+        <textarea
+          id="modulo_description"
+          [formControl]="moduloForm.controls.description"
+          rows="2"
+        ></textarea>
+      </div>
+    }
+
+    @if (moduleMode() === 'new' || form.controls.component_id.value) {
+      <div class="form-field">
+        <label for="modulo_route">
+          Rota
+          <span class="tooltip" tabindex="0">
+            ?
+            <span class="tooltip-text">
+              Caminho/URL onde esse módulo fica dentro do sistema legado (ex: /erp/faturamento). O
+              Agente usa isso pra indicar ao usuário onde encontrar a tela relacionada.
+            </span>
+          </span>
+        </label>
+        <input
+          id="modulo_route"
+          [formControl]="moduloForm.controls.route"
+          placeholder="/erp/faturamento"
+        />
+      </div>
+
+      <div class="form-field">
+        <label>
+          Print de acesso
+          <span class="tooltip" tabindex="0">
+            ?
+            <span class="tooltip-text">
+              Prints de tela mostrando onde esse módulo está localizado no sistema. Ajudam o usuário
+              e o Agente a identificar visualmente a área correta.
+            </span>
+          </span>
+        </label>
+
+        @if (moduleImages().length > 0 || pendingModuleImages().length > 0) {
+          <div class="image-attachments">
+            @for (image of moduleImages(); track image.id) {
+              <div class="image-attachment">
+                <img [src]="image.url" [alt]="image.caption ?? 'Imagem do módulo'" />
+                <button type="button" class="remove-image" (click)="removeModuleImage(image)">
+                  ×
+                </button>
+              </div>
+            }
+            @for (pending of pendingModuleImages(); track pending.previewUrl) {
+              <div class="image-attachment">
+                <img [src]="pending.previewUrl" alt="Imagem selecionada" />
+                <button
+                  type="button"
+                  class="remove-image"
+                  (click)="removePendingModuleImage(pending)"
+                >
+                  ×
+                </button>
+                <div class="image-caption">Será enviada ao salvar</div>
+              </div>
+            }
+          </div>
+        }
+
+        <input
+          type="file"
+          accept="image/*"
+          multiple
+          (change)="onModuleImagesSelected($event)"
+          [disabled]="uploadingModuleImage()"
+        />
+        @if (uploadingModuleImage()) {
+          <p class="field-hint">Enviando imagem(ns)...</p>
+        }
+      </div>
+    }
+
+    <div class="form-actions-spaced">
+      <button type="button" class="btn" (click)="goToStep2()">Continuar</button>
+      <a class="btn btn-secondary" routerLink="/conhecimentos">Cancelar</a>
+    </div>
+  }
+
+  @if (currentStep() === 2) {
+    <div class="tip-box">
+      <svg
+        class="tip-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 16v-4" />
+        <path d="M12 8h.01" />
+      </svg>
+      <div>
+        <strong>Como escrever um bom conhecimento</strong>
+        Descreva o sintoma relatado, a causa mais provável e o passo a passo da solução. Evite
+        respostas genéricas — quanto mais específico o texto, melhor o Agente consegue diagnosticar.
+        Use "Temporário" só para informações com prazo de validade (ex: uma instabilidade ou
+        manutenção programada).
+      </div>
+    </div>
+
+    <div class="form-field">
+      <label for="type">Tipo</label>
+      <select id="type" formControlName="type">
+        <option value="base">Base</option>
+        <option value="temporario">Temporário</option>
+      </select>
+    </div>
+
+    @if (isTemporario) {
+      <div class="form-field">
+        <label for="valid_until">Válido até</label>
+        <input id="valid_until" type="date" formControlName="valid_until" />
+      </div>
+    }
+
+    <div class="form-field">
+      <label for="content">Conteúdo</label>
+      <textarea
+        id="content"
+        formControlName="content"
+        rows="5"
+        (blur)="checkDuplicate()"
+      ></textarea>
+      <p class="field-hint">
+        O Agente formata e indexa este conteúdo automaticamente quando ele é aprovado.
+      </p>
+    </div>
+
+    @if (authService.isMaster() && moduleFunctions().length > 0) {
+      <div class="form-field">
+        <label>
+          Funções vinculadas
+          <span class="tooltip" tabindex="0">
+            ?
+            <span class="tooltip-text">
+              Funções do sistema legado que ajudam a resolver o problema deste conhecimento. Quando
+              o Agente recupera este conhecimento, ele pode conferir a configuração com uma função
+              de consulta e propor uma alteração — que só é executada se o usuário autorizar.
+            </span>
+          </span>
+        </label>
+        <div class="function-checklist">
+          @for (funcao of moduleFunctions(); track funcao.id) {
+            <label class="function-check">
+              <input
+                type="checkbox"
+                [checked]="selectedFunctionIds().includes(funcao.id)"
+                (change)="toggleFunction(funcao.id)"
+              />
+              <span>{{ funcao.name }}</span>
+              <span class="type-pill">{{ operationTypeLabel[funcao.operation_type] }}</span>
+              @if (funcao.status !== 'aprovado' || !funcao.active) {
+                <span class="field-hint"
+                  >(ainda não {{ funcao.status !== 'aprovado' ? 'aprovada' : 'ativa' }})</span
+                >
+              }
+            </label>
+          }
+        </div>
+
+        @if (id) {
+          <div class="function-recommend">
+            <button
+              type="button"
+              class="btn btn-sm btn-secondary"
+              [disabled]="recommending()"
+              (click)="recommendFunctions()"
+            >
+              {{ recommending() ? 'Analisando...' : 'Recomendar funções' }}
+            </button>
+          </div>
+        }
+
+        @if (recommendation(); as r) {
+          @if (!r.available) {
+            <p class="field-hint">O assistente não está disponível para recomendar agora.</p>
+          } @else if (r.recommendations.length === 0) {
+            <p class="field-hint">Nenhuma função do módulo ajuda neste conhecimento.</p>
+          } @else {
+            <div class="function-checklist function-recommend">
+              @for (item of r.recommendations; track item.function.id) {
+                <div class="function-check is-suggestion">
+                  <span>
+                    <strong>{{ item.function.name }}</strong>
+                    @if (item.reason) {
+                      <span class="field-hint"> — {{ item.reason }}</span>
+                    }
+                  </span>
+                  @if (selectedFunctionIds().includes(item.function.id)) {
+                    <span class="field-hint">vinculada</span>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      (click)="linkRecommended(item.function.id)"
+                    >
+                      Vincular
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+
+    @if (duplicates().length > 0) {
+      <div class="form-field">
+        <p class="field-error">
+          Possível duplicidade encontrada com {{ duplicates().length }} conhecimento(s) já
+          cadastrado(s) neste módulo. Você pode continuar mesmo assim.
+        </p>
+      </div>
+    }
+
+    <div class="form-actions-spaced">
+      <button class="btn" type="submit" [disabled]="saving()">Salvar</button>
+      <button type="button" class="btn btn-secondary" (click)="goToStep1()">Voltar</button>
+      <a class="btn btn-secondary" routerLink="/conhecimentos">Cancelar</a>
+    </div>
+  }
+</form>

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" color="#1F5C4E" role="img" aria-labelledby="sage-icon-title">
+  <title id="sage-icon-title">S.A.G.E.</title>
+  <g stroke="currentColor" stroke-width="3.2" stroke-linecap="round">
+    <line x1="2" y1="16" x2="6.5" y2="16"/>
+    <line x1="24.5" y1="16" x2="30" y2="16"/>
+  </g>
+  <path d="M24.93 12.75 A9.5 9.5 0 1 0 24.93 19.25" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/>
+  <circle cx="16" cy="16" r="3.4" fill="currentColor"/>
+</svg>

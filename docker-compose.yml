@@ -1,0 +1,154 @@
+name: sage
+
+services:
+  sage-db:
+    image: mysql:8.4
+    container_name: sage-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sage}
+      MYSQL_USER: ${MYSQL_USER:-sage}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sage}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - "${DB_PORT:-3307}:3306"
+    volumes:
+      - sage-db-data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - sage-net
+
+  sage-backend:
+    build:
+      context: ./painel-backend
+      dockerfile: Dockerfile
+    container_name: sage-backend
+    restart: unless-stopped
+    depends_on:
+      sage-db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      # Uma conversa com função faz agente → GLPI → agente; com um único worker
+      # o Painel inteiro ficaria bloqueado durante cada atendimento.
+      PHP_CLI_SERVER_WORKERS: 4
+      # Usuário de teste do sistema legado, usado por padrão na simulação. A senha
+      # fica só no servidor: nunca é enviada ao navegador. O endereço da API do
+      # plugin do sistema legado é cadastrado no Painel (Chaves de acesso).
+      # Endereço da API do Painel visto pelo servidor do sistema legado (para onde
+      # ele manda o chat). Mostrado em Chaves de acesso.
+      SAGE_PUBLIC_API_URL: ${SAGE_PUBLIC_API_URL:-http://host.docker.internal:8000/api/v1}
+      SIMULATION_ERP_LOGIN: ${SIMULATION_ERP_LOGIN:-}
+      SIMULATION_ERP_PASSWORD: ${SIMULATION_ERP_PASSWORD:-}
+      # Chave de execução e URL do plugin cadastradas por padrão pelo seeder.
+      SEED_ERP_EXECUTION_KEY: ${SEED_ERP_EXECUTION_KEY:-}
+      SEED_ERP_API_URL: ${SEED_ERP_API_URL:-http://host.docker.internal:8080/plugins/sage/api}
+    extra_hosts:
+      # Permite cadastrar no Painel um sistema legado que roda no próprio host
+      # (ex.: o GLPI de desenvolvimento, em outro docker compose).
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./painel-backend:/var/www/html
+    networks:
+      - sage-net
+
+  sage-queue:
+    build:
+      context: ./painel-backend
+      dockerfile: Dockerfile
+    container_name: sage-queue
+    restart: unless-stopped
+    depends_on:
+      sage-db:
+        condition: service_healthy
+    command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=5", "--sleep=2"]
+    volumes:
+      - ./painel-backend:/var/www/html
+    networks:
+      - sage-net
+
+  sage-frontend:
+    build:
+      context: ./painel-frontend
+      dockerfile: Dockerfile
+    container_name: sage-frontend
+    restart: unless-stopped
+    environment:
+      HOME: /tmp
+    ports:
+      - "${FRONTEND_PORT:-4200}:4200"
+    volumes:
+      - ./painel-frontend:/app
+      - sage-node-modules:/app/node_modules
+    networks:
+      - sage-net
+
+  sage-adminer:
+    image: adminer:latest
+    container_name: sage-adminer
+    restart: unless-stopped
+    profiles: ["tools"]
+    environment:
+      ADMINER_DEFAULT_SERVER: sage-db
+    ports:
+      - "${ADMINER_PORT:-8081}:8080"
+    networks:
+      - sage-net
+
+  sage-qdrant:
+    image: qdrant/qdrant:latest
+    container_name: sage-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - sage-qdrant-data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - sage-net
+
+  sage-agent:
+    build:
+      context: ./agente-python
+      dockerfile: Dockerfile
+    container_name: sage-agent
+    restart: unless-stopped
+    depends_on:
+      sage-qdrant:
+        condition: service_healthy
+    environment:
+      QDRANT_URL: http://sage-qdrant:6333
+      LLM_PROVIDER: ${LLM_PROVIDER:-template}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_THINKING_BUDGET: ${LLM_THINKING_BUDGET:-128}
+      SISTEMA_LEGADO_NOME: ${SISTEMA_LEGADO_NOME:-}
+      OLLAMA_URL: ${OLLAMA_URL:-http://sage-ollama:11434}
+    ports:
+      - "${AGENT_PORT:-8001}:8000"
+    volumes:
+      - ./agente-python:/app
+      - sage-embeddings-cache:/root/.cache
+    networks:
+      - sage-net
+
+networks:
+  sage-net:
+    driver: bridge
+
+volumes:
+  sage-db-data:
+  sage-node-modules:
+  sage-qdrant-data:
+  sage-embeddings-cache:

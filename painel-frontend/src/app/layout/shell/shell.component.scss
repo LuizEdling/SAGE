@@ -1,0 +1,130 @@
+.shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  padding: 0.65rem 1.5rem;
+  background: var(--sage-sidebar-bg);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.15);
+}
+
+.topnav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+
+  .brand-logo {
+    height: 24px;
+    width: auto;
+    display: block;
+    color: #fff;
+  }
+}
+
+.topnav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+  flex: 1;
+
+  .nav-group {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+  }
+
+  .nav-divider {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.12);
+    flex-shrink: 0;
+  }
+
+  a {
+    padding: 0.45rem 0.75rem;
+    border-radius: var(--sage-radius-sm);
+    color: var(--sage-sidebar-text);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    &.active {
+      background: var(--sage-action);
+      color: #fff;
+    }
+  }
+}
+
+.topnav-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-shrink: 0;
+
+  .btn-secondary {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+}
+
+.topbar-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--sage-radius-sm);
+  text-decoration: none;
+
+  &:hover,
+  &.active {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    background: var(--sage-action-dark);
+  }
+
+  .user-name {
+    font-weight: 600;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  .user-role {
+    color: var(--sage-sidebar-text-muted);
+    font-size: 10px;
+  }
+}
+
+.content {
+  flex: 1;
+  padding: 1.75rem;
+}
