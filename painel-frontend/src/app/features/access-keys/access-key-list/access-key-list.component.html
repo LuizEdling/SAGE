@@ -1,0 +1,162 @@
+<app-page-header
+  eyebrow="Segurança"
+  title="Chaves de acesso"
+/>
+
+@if (newlyCreatedKey()) {
+  <div class="card" style="border-color: var(--sage-success); margin-bottom: 1rem;">
+    <strong>Chave gerada — copie agora. O sistema guarda apenas o hash dela, então este valor não poderá ser recuperado depois:</strong>
+    <p><code>{{ newlyCreatedKey() }}</code></p>
+  </div>
+}
+
+<div class="card" style="margin-bottom: 1.5rem;">
+  <div class="section-header">
+    <div>
+      <h3>Chaves de chat</h3>
+      <p class="section-subtitle">Autenticam o sistema legado quando ele envia as mensagens do chat ao painel.</p>
+    </div>
+    <span class="pill-badge">{{ chatKeys().length }} {{ chatKeys().length === 1 ? 'ativa' : 'ativas' }}</span>
+  </div>
+
+  <div class="section-actions">
+    <a class="btn" (click)="createChatKey()">+ Gerar nova chave</a>
+  </div>
+
+  @if (chatKeyError()) {
+    <p class="field-error">{{ chatKeyError() }}</p>
+  }
+
+  @if (chatKeys().length === 0) {
+    <app-empty-state message="Nenhuma chave de chat cadastrada." />
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Gerada em</th>
+          <th>Gerada por</th>
+          <th>Conversas</th>
+          <th>Ativa</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (key of chatKeys(); track key.id) {
+          <tr>
+            <td>{{ key.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ key.created_by?.name ?? '—' }}</td>
+            <td>{{ key.conversations_count ?? 0 }}</td>
+            <td>{{ key.active ? 'Sim' : 'Não' }}</td>
+            <td>
+              <div class="icon-actions">
+                <app-icon-toggle-active-button [active]="key.active" (toggle)="toggleChatKey(key)" />
+                <app-icon-delete-button (remove)="deleteChatKey(key.id)" />
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+
+  <app-chat-integration-guide />
+</div>
+
+<div class="card">
+  <div class="section-header">
+    <div>
+      <h3>Chaves de execução (sistema legado)</h3>
+      <p class="section-subtitle">
+        Dizem onde está a API do plugin do sistema legado e autorizam o painel a importar e executar
+        funções nela. Vale a chave ativa mais recente.
+      </p>
+    </div>
+    <span class="pill-badge">{{ erpKeys().length }} {{ erpKeys().length === 1 ? 'ativa' : 'ativas' }}</span>
+  </div>
+
+  <div class="erp-key-form section-actions">
+    <div class="form-field">
+      <label for="erp_description">Descrição da nova chave</label>
+      <input id="erp_description" [value]="newErpDescription()" (input)="newErpDescription.set($any($event.target).value)" />
+    </div>
+    <div class="form-field erp-url-field">
+      <label for="erp_api_url">URL da API do plugin</label>
+      <input
+        id="erp_api_url"
+        type="url"
+        placeholder="https://meu-sistema.exemplo/caminho/da/api"
+        [value]="newErpApiUrl()"
+        (input)="newErpApiUrl.set($any($event.target).value)"
+      />
+      <p class="field-hint">Endereço base onde o plugin responde <code>/manifest</code> e <code>/functions/&#123;code&#125;/execute</code>.</p>
+    </div>
+  </div>
+  @if (erpFormError()) {
+    <p class="field-error">{{ erpFormError() }}</p>
+  }
+  <a class="btn" (click)="createErpKey()">+ Gerar nova chave</a>
+
+  <br /><br />
+
+  @if (erpKeyError()) {
+    <p class="field-error">{{ erpKeyError() }}</p>
+  }
+
+  @if (erpKeys().length === 0) {
+    <app-empty-state message="Nenhuma chave de execução cadastrada." />
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Chave</th>
+          <th>Descrição</th>
+          <th>URL da API do plugin</th>
+          <th>Ativa</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (key of erpKeys(); track key.id) {
+          <tr>
+            <td><code>{{ key.access_key }}</code></td>
+            <td><span class="truncate" style="max-width: 200px;" [title]="key.description">{{ key.description }}</span></td>
+            <td>
+              @if (editingUrlKeyId() === key.id) {
+                <div class="erp-url-edit">
+                  <input
+                    type="url"
+                    aria-label="Nova URL da API do plugin"
+                    [value]="editingUrl()"
+                    (input)="editingUrl.set($any($event.target).value)"
+                    (keydown.enter)="saveUrl(key)"
+                    (keydown.escape)="cancelEditUrl()"
+                  />
+                  <button type="button" class="btn btn-sm" (click)="saveUrl(key)">Salvar</button>
+                  <button type="button" class="btn btn-sm btn-secondary" (click)="cancelEditUrl()">Cancelar</button>
+                </div>
+              } @else {
+                <span class="truncate mono-value" style="max-width: 300px;" [title]="key.api_url">{{ key.api_url }}</span>
+              }
+              @if (testResult(key.id); as result) {
+                <p class="connection-result" [class.ok]="result.ok">{{ result.message }}</p>
+              }
+            </td>
+            <td>{{ key.active ? 'Sim' : 'Não' }}</td>
+            <td>
+              <div class="icon-actions">
+                <button type="button" class="btn btn-sm btn-secondary" [disabled]="isTesting(key.id)" (click)="testConnection(key)">
+                  {{ isTesting(key.id) ? 'Testando...' : 'Testar conexão' }}
+                </button>
+                @if (editingUrlKeyId() !== key.id) {
+                  <button type="button" class="btn btn-sm btn-secondary" (click)="startEditUrl(key)">Editar URL</button>
+                }
+                <app-icon-toggle-active-button [active]="key.active" (toggle)="toggleErpKey(key)" />
+                <app-icon-delete-button (remove)="deleteErpKey(key.id)" />
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

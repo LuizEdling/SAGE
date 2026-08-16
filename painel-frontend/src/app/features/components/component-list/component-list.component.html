@@ -1,0 +1,59 @@
+<app-page-header eyebrow="Conhecimento" title="Módulos">
+  <a actions class="btn" routerLink="/modulos/novo">+ Novo módulo</a>
+</app-page-header>
+
+@if (deleteError()) {
+  <div class="card" style="margin-bottom: 1rem;">
+    <p>{{ deleteError() }}</p>
+  </div>
+}
+
+<div class="card">
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else if (items().length === 0) {
+    <app-empty-state
+      message="Nenhum módulo cadastrado ainda. Os módulos organizam o conhecimento e as funções, e orientam a busca do Agente."
+    >
+      <a action class="btn btn-sm" routerLink="/modulos/novo">+ Cadastrar módulo</a>
+    </app-empty-state>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Módulo</th>
+          <th>Descrição</th>
+          <th>Rota no sistema</th>
+          <th>Telas</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td><span class="truncate" style="max-width: 200px;" [title]="item.name">{{ item.name }}</span></td>
+            <td>
+              <span class="truncate" style="max-width: 320px;" [title]="item.description">
+                {{ item.description }}
+              </span>
+            </td>
+            <td>
+              @if (item.route) {
+                <span class="truncate" style="max-width: 200px;" [title]="item.route">{{ item.route }}</span>
+              } @else {
+                <span class="text-muted">—</span>
+              }
+            </td>
+            <td>{{ item.images.length }}</td>
+            <td>
+              <div class="icon-actions">
+                <app-icon-edit-link [link]="['/modulos', item.id]" />
+                <app-icon-delete-button (remove)="remove(item)" />
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

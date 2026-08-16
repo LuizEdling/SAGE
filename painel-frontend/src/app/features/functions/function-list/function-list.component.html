@@ -1,0 +1,119 @@
+<app-page-header eyebrow="Execução" title="Funções" [showFilters]="true">
+  <div actions class="header-actions">
+    @if (authService.isMaster()) {
+      <button
+        type="button"
+        class="btn btn-secondary"
+        [disabled]="importing()"
+        (click)="importManifest()"
+      >
+        {{ importing() ? 'Importando...' : 'Importar do sistema legado' }}
+      </button>
+    }
+    <a class="btn btn-secondary" routerLink="/funcoes/guia">Como criar funções</a>
+  </div>
+  <div filters class="tab-filters">
+    <a (click)="setStatusFilter(undefined)" [class.active]="!statusFilter()">Todos</a>
+    <a (click)="setStatusFilter('pendente')" [class.active]="statusFilter() === 'pendente'"
+      >Pendente</a
+    >
+    <a (click)="setStatusFilter('aprovado')" [class.active]="statusFilter() === 'aprovado'"
+      >Aprovado</a
+    >
+    <a (click)="setStatusFilter('reprovado')" [class.active]="statusFilter() === 'reprovado'"
+      >Reprovado</a
+    >
+  </div>
+</app-page-header>
+
+@if (importResult(); as r) {
+  <div class="card">
+    <p>
+      Funções do sistema legado: <strong>{{ r.created }}</strong> nova(s),
+      <strong>{{ r.updated }}</strong> atualizada(s), <strong>{{ r.failed }}</strong> com erro.
+      Funções novas ou alteradas entram como pendentes e inativas: aprove e ative cada uma abaixo.
+    </p>
+    @for (item of r.items; track item.code) {
+      @if (item.status === 'erro') {
+        <p class="field-error">{{ item.name }}: {{ item.message }}</p>
+      }
+    }
+  </div>
+}
+@if (importError()) {
+  <div class="card">
+    <p class="field-error">{{ importError() }}</p>
+  </div>
+}
+
+<div class="card">
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else if (items().length === 0) {
+    <app-empty-state
+      message="Nenhuma função ainda. Elas nascem no sistema legado e entram pelo botão Importar do sistema legado."
+    >
+      <a action class="btn btn-sm" routerLink="/funcoes/guia">Ver como criar funções</a>
+    </app-empty-state>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Função</th>
+          <th>Módulo</th>
+          <th>Tipo de operação</th>
+          <th>Aprovação</th>
+          <th>Ativa</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>
+              <span class="truncate" style="max-width: 260px" [title]="item.name">{{
+                item.name
+              }}</span>
+              @if (item.code) {
+                <span class="truncate mono-value" style="max-width: 260px" [title]="item.code">{{
+                  item.code
+                }}</span>
+              }
+            </td>
+            <td>
+              <span class="truncate" style="max-width: 160px" [title]="item.component?.name">{{
+                item.component?.name
+              }}</span>
+            </td>
+            <td><span class="type-pill">{{ operationTypeLabel[item.operation_type] }}</span></td>
+            <td><app-status-badge [status]="item.status" /></td>
+            <td>
+              <button
+                type="button"
+                class="toggle-switch"
+                [class.on]="item.active"
+                [disabled]="!authService.isMaster()"
+                (click)="toggleActive(item.id)"
+                [attr.aria-label]="item.active ? 'Desativar' : 'Ativar'"
+              ></button>
+            </td>
+            <td>
+              <div class="icon-actions">
+                @if (authService.isMaster() && item.status === 'pendente') {
+                  <app-icon-approve-button (approve)="approve(item.id)" />
+                  <app-icon-reject-button (reject)="reject(item.id)" />
+                }
+                <a class="btn btn-sm btn-secondary" [routerLink]="['/funcoes', item.id]">Ver</a>
+                <app-icon-delete-button (remove)="remove(item.id)" />
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (meta(); as m) {
+      <app-pagination [meta]="m" (pageChange)="goToPage($event)" />
+    }
+  }
+</div>

@@ -1,0 +1,44 @@
+<app-page-header eyebrow="Visão geral" [title]="'Bem-vindo, ' + (currentUser()?.name ?? '')" />
+
+<div class="card pipeline-card">
+  <p class="pipeline-title">Pipeline de conhecimento</p>
+
+  <div class="pipeline">
+    <div class="pipeline-step">
+      <span class="pipeline-value">{{ stats()?.pendentes ?? '—' }}</span>
+      <span class="pipeline-label">Pendente</span>
+    </div>
+
+    <span class="pipeline-arrow"></span>
+
+    <div class="pipeline-step">
+      <span class="pipeline-value">{{ stats()?.aprovados ?? '—' }}</span>
+      <span class="pipeline-label">Aprovado</span>
+    </div>
+
+    <span class="pipeline-arrow"></span>
+
+    <div class="pipeline-step pipeline-step-signal">
+      <span class="pipeline-value">{{ stats()?.indexados ?? '—' }}</span>
+      <span class="pipeline-label">Indexado</span>
+    </div>
+  </div>
+
+  @if ((stats()?.pendentes ?? 0) > 0) {
+    <a class="btn" routerLink="/conhecimentos" [queryParams]="{ status: 'pendente' }">
+      Aprovar {{ stats()!.pendentes }} pendente(s)
+    </a>
+  }
+</div>
+
+<div class="dashboard-secondary">
+  <div class="card dashboard-mini-stat">
+    <span class="mini-stat-value">{{ stats()?.modulos ?? '—' }}</span>
+    <span class="mini-stat-label">Módulos cadastrados</span>
+  </div>
+
+  <div class="card dashboard-mini-stat">
+    <span class="mini-stat-value">{{ stats()?.conversas ?? '—' }}</span>
+    <span class="mini-stat-label">Conversas registradas</span>
+  </div>
+</div>

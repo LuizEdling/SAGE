@@ -1,0 +1,36 @@
+.erp-key-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+
+  .form-field {
+    width: 280px;
+  }
+
+  .erp-url-field {
+    flex: 1;
+    min-width: 320px;
+    max-width: 560px;
+  }
+}
+
+.erp-url-edit {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+
+  input {
+    min-width: 260px;
+  }
+}
+
+.connection-result {
+  margin: 0.35rem 0 0;
+  font-size: 12px;
+  color: var(--sage-danger);
+
+  &.ok {
+    color: var(--sage-success);
+  }
+}
