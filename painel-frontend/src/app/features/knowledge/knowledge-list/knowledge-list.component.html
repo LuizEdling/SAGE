@@ -1,0 +1,84 @@
+<app-page-header
+  eyebrow="Base de conhecimento"
+  [title]="statusFilter() === 'pendente' ? 'Aprovações pendentes' : 'Conhecimentos'"
+  [showFilters]="true"
+>
+  <a actions class="btn btn-secondary" routerLink="/conhecimentos/importar">Importar do código</a>
+  <a actions class="btn" routerLink="/conhecimentos/novo">+ Novo conhecimento</a>
+  <div filters class="tab-filters">
+    <a routerLink="/conhecimentos" [class.active]="!statusFilter()">Todos</a>
+    <a routerLink="/conhecimentos" [queryParams]="{ status: 'pendente' }" [class.active]="statusFilter() === 'pendente'">Pendente</a>
+    <a routerLink="/conhecimentos" [queryParams]="{ status: 'aprovado' }" [class.active]="statusFilter() === 'aprovado'">Aprovado</a>
+    <a routerLink="/conhecimentos" [queryParams]="{ status: 'reprovado' }" [class.active]="statusFilter() === 'reprovado'">Reprovado</a>
+  </div>
+</app-page-header>
+
+<div class="card">
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else if (items().length === 0) {
+    <app-empty-state message="Nenhum conhecimento encontrado.">
+      <a action class="btn btn-sm" routerLink="/conhecimentos/novo">+ Cadastrar conhecimento</a>
+    </app-empty-state>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Conteúdo</th>
+          <th>Módulo</th>
+          <th>Tipo</th>
+          <th>Status</th>
+          <th>
+            <span class="th-with-help">
+              Indexado
+              <app-icon-help text="Indica se o conhecimento já foi lido pelo Agente e está disponível na base de conhecimento dele." />
+            </span>
+          </th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td><span class="truncate" style="max-width: 340px;" [title]="item.content">{{ item.content | markdownPreview }}</span></td>
+            <td><span class="truncate" style="max-width: 160px;" [title]="item.component?.name">{{ item.component?.name }}</span></td>
+            <td><span class="type-pill">{{ item.type }}</span></td>
+            <td><app-status-badge [status]="item.status" /></td>
+            <td>
+              <span
+                class="indexed-indicator"
+                [class.is-indexed]="item.qdrant_point_id"
+                [title]="item.qdrant_point_id ? 'Indexado no Qdrant' : 'Ainda não indexado'"
+              >
+                @if (item.qdrant_point_id) {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                } @else {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                }
+              </span>
+            </td>
+            <td>
+              <div class="icon-actions">
+                @if (authService.isMaster() && item.status === 'pendente') {
+                  <app-icon-approve-button (approve)="approve(item.id)" />
+                  <app-icon-reject-button (reject)="reject(item.id)" />
+                }
+                <app-icon-edit-link [link]="['/conhecimentos', item.id, 'editar']" />
+                <app-icon-delete-button (remove)="remove(item.id)" />
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (meta(); as m) {
+      <app-pagination [meta]="m" (pageChange)="goToPage($event)" />
+    }
+  }
+</div>
