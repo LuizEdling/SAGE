@@ -1,0 +1,33 @@
+<app-page-header eyebrow="Segurança" [title]="id ? 'Editar usuário' : 'Novo usuário'" />
+
+<form class="card" [formGroup]="form" (ngSubmit)="submit()">
+  <div class="form-field">
+    <label for="name">Nome</label>
+    <input id="name" formControlName="name" />
+  </div>
+
+  <div class="form-field">
+    <label for="email">E-mail</label>
+    <input id="email" type="email" formControlName="email" />
+  </div>
+
+  @if (!id) {
+    <div class="form-field">
+      <label for="password">Senha inicial</label>
+      <input id="password" type="password" formControlName="password" />
+    </div>
+  }
+
+  <div class="form-field">
+    <label><input type="checkbox" formControlName="is_master" /> Gerente (aprova conteúdo e gerencia chaves de acesso)</label>
+  </div>
+
+  @if (errorMessage()) {
+    <p class="field-error">{{ errorMessage() }}</p>
+  }
+
+  <div class="form-actions-spaced">
+    <button class="btn" type="submit" [disabled]="saving()">Salvar</button>
+    <a class="btn btn-secondary" routerLink="/usuarios">Cancelar</a>
+  </div>
+</form>

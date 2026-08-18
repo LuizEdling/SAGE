@@ -1,0 +1,58 @@
+<app-page-header eyebrow="Conta" title="Meu perfil" />
+
+<div class="card profile-card">
+  <span class="profile-avatar">{{ initial() }}</span>
+  <h3>{{ currentUser()?.name }}</h3>
+  <p class="profile-email">{{ currentUser()?.email }}</p>
+  <span class="badge" [class.role-master]="isMaster()" [class.role-user]="!isMaster()">
+    {{ isMaster() ? 'Gerente' : 'Usuário comum' }}
+  </span>
+
+  <form class="profile-form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-field">
+      <label for="name">Nome</label>
+      <input id="name" formControlName="name" />
+    </div>
+
+    <div class="form-field">
+      <label for="email">E-mail</label>
+      <input id="email" type="email" formControlName="email" />
+    </div>
+
+    @if (!changingPassword()) {
+      <a (click)="togglePasswordFields()">Alterar senha</a>
+    } @else {
+      <div class="password-section">
+        <div class="form-field">
+          <label for="current_password">Senha atual</label>
+          <input id="current_password" type="password" formControlName="current_password" />
+        </div>
+
+        <div class="form-field">
+          <label for="password">Nova senha</label>
+          <input id="password" type="password" formControlName="password" />
+        </div>
+
+        <div class="form-field">
+          <label for="password_confirmation">Confirmar nova senha</label>
+          <input id="password_confirmation" type="password" formControlName="password_confirmation" />
+        </div>
+
+        <a (click)="togglePasswordFields()">Cancelar alteração de senha</a>
+      </div>
+    }
+
+    @if (successMessage()) {
+      <p class="success-message">{{ successMessage() }}</p>
+    }
+    @if (errorMessage()) {
+      <p class="field-error">{{ errorMessage() }}</p>
+    }
+
+    <div class="form-actions">
+      <button class="btn" type="submit" [disabled]="saving()">
+        {{ saving() ? 'Salvando...' : 'Salvar alterações' }}
+      </button>
+    </div>
+  </form>
+</div>
