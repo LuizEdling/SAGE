@@ -1,0 +1,86 @@
+.chat-card {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 260px);
+  min-height: 400px;
+}
+
+.chat-transcript {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-bottom: 1rem;
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--sage-border);
+
+  input {
+    flex: 1;
+    border: 1px solid var(--sage-border);
+    border-radius: var(--sage-radius-sm);
+    padding: 0.6rem 0.8rem;
+    font-size: 14px;
+  }
+}
+
+.simulate-as {
+  max-width: 420px;
+  margin-bottom: 0;
+}
+
+// Login e senha de "Outro usuário".
+.simulate-credentials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 0.75rem;
+
+  .form-field {
+    flex: 1;
+    min-width: 200px;
+    max-width: 260px;
+    margin-bottom: 0;
+  }
+}
+
+// Consultas e proposta de alteração: diagnóstico do gestor, recolhido por padrão.
+.function-details {
+  margin-top: 0.6rem;
+  border-top: 1px dashed var(--sage-border);
+  padding-top: 0.5rem;
+  font-size: var(--fs-meta);
+
+  summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--sage-text-muted);
+  }
+
+  summary:focus-visible {
+    outline: 2px solid var(--sage-signal);
+    outline-offset: 2px;
+  }
+}
+
+.function-details-item {
+  margin-top: 0.6rem;
+
+  code {
+    display: inline-block;
+    margin-bottom: 0.35rem;
+  }
+}
+
+.function-details-explain {
+  margin: 0 0 0.35rem;
+  color: var(--sage-text);
+}

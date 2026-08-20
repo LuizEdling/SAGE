@@ -1,0 +1,205 @@
+<app-page-header eyebrow="Diagnóstico assistido" title="Simular atendimento" />
+
+@if (authService.isMaster()) {
+  <div class="card">
+    <div class="form-field simulate-as">
+      <label for="simular_como">
+        Simular como
+        <span class="tooltip" tabindex="0">
+          ?
+          <span class="tooltip-text">
+            Com um usuário do sistema legado, o Agente confere as configurações reais com os
+            direitos desse usuário e pode propor alterações — que, na simulação, nunca são
+            executadas. O usuário de teste padrão tem as credenciais guardadas no servidor; para
+            outro usuário, informe login e senha, que o próprio sistema legado confere. Sem usuário,
+            o Agente responde só pelo conhecimento.
+          </span>
+        </span>
+      </label>
+      <select
+        id="simular_como"
+        [ngModel]="modo()"
+        (ngModelChange)="mudarModo($event)"
+        [disabled]="sending()"
+      >
+        @if (keyInUse()?.simulation_login; as login) {
+          <option value="padrao">Usuário de teste ({{ login }})</option>
+        }
+        <option value="outro">Outro usuário (login e senha)</option>
+        <option value="nenhum">Sem usuário — responde só pelo conhecimento</option>
+      </select>
+
+      <!-- Quem executa as consultas é a chave de execução ativa mais recente. -->
+      @if (keyInUse(); as k) {
+        @if (modo() !== 'nenhum') {
+          @if (k.execution_key) {
+            <span class="field-hint"
+              >Chave de execução em uso: {{ k.execution_key.description }}</span
+            >
+          } @else {
+            <span class="field-hint field-error">
+              Nenhuma chave de execução ativa. Ative uma em Chaves de acesso para simular como um
+              usuário.
+            </span>
+          }
+        }
+      }
+    </div>
+
+    @if (modo() === 'outro') {
+      <div class="simulate-credentials">
+        <div class="form-field">
+          <label for="usuario_login">Login</label>
+          <input
+            id="usuario_login"
+            class="mono-value"
+            placeholder="maria.silva"
+            autocomplete="off"
+            [ngModel]="usuarioLogin()"
+            (ngModelChange)="usuarioLogin.set($event)"
+            [disabled]="sending()"
+          />
+        </div>
+        <div class="form-field">
+          <label for="usuario_senha">Senha</label>
+          <input
+            id="usuario_senha"
+            type="password"
+            autocomplete="new-password"
+            [ngModel]="usuarioSenha()"
+            (ngModelChange)="usuarioSenha.set($event)"
+            [disabled]="sending()"
+          />
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<div class="card chat-card">
+  <div class="chat-transcript">
+    @if (messages().length === 0) {
+      <app-empty-state
+        message="Mande uma mensagem pra simular um usuário do ERP conversando com o Agente."
+      />
+    }
+
+    @for (message of messages(); track message.id) {
+      <div
+        class="chat-bubble"
+        [class.chat-bubble-user]="message.author === 'usuario'"
+        [class.chat-bubble-agent]="message.author === 'agente'"
+      >
+        <div class="chat-bubble-content" [innerHTML]="message.content | chatText"></div>
+
+        @if (message.author === 'agente' && message.metadata) {
+          <!-- A conversa em si não expõe confiança/score: isso é diagnóstico
+               interno. A trilha de evidência fica porque esta tela é a
+               ferramenta do gestor para conferir de qual conhecimento a
+               resposta saiu. -->
+          <app-evidence-trail [fontes]="message.metadata.fontes ?? []" />
+
+          <!-- Consultas e alteração proposta são diagnóstico do gestor, não parte da
+               conversa: ficam recolhidas, com o resumo à vista. -->
+          @if (temDetalhesDeFuncao(message)) {
+            <details class="function-details">
+              <summary>
+                {{ resumoDeFuncoes(message) }}
+                @if (falhas(message) > 0) {
+                  <span class="badge status-falhou">falhou</span>
+                }
+              </summary>
+
+              @for (execucao of message.metadata.execucoes ?? []; track $index) {
+                <div class="function-details-item">
+                  <p class="chat-bubble-resource-label">
+                    Consulta ao sistema — {{ execucao.status }}
+                  </p>
+                  <code>{{ execucao.codigo }}</code>
+                  @if (execucao.status === 'falhou') {
+                    <p class="function-details-explain">{{ explicarFalha(execucao) }}</p>
+                  }
+                  @if (semPermissaoParaAlterar(message, execucao)) {
+                    <p class="function-details-explain">
+                      Sem proposta de alteração: o usuário simulado não tem permissão para alterar
+                      esta configuração.
+                    </p>
+                  }
+                  <p class="mono-value">{{ execucao.resultado | json }}</p>
+                </div>
+              }
+
+              @if (message.metadata.parametro_solicitado; as pedido) {
+                <div class="function-details-item">
+                  <p class="chat-bubble-resource-label">
+                    Faltou um dado — o Agente perguntou ao usuário
+                  </p>
+                  <code>{{ pedido.codigo }}</code>
+                  @for (parametro of pedido.parametros; track parametro.nome) {
+                    <p class="function-details-explain">
+                      {{ parametro.descricao ?? parametro.nome }}
+                      {{
+                        parametro.motivo === 'invalido' ? '(o valor informado não era válido)' : ''
+                      }}
+                    </p>
+                  }
+                </div>
+              }
+
+              @if (message.metadata.proposta; as proposta) {
+                <div class="function-details-item">
+                  <p class="chat-bubble-resource-label">
+                    Alteração proposta — não executada em simulação
+                  </p>
+                  <code>{{ proposta.codigo }}</code>
+                  <p class="mono-value">{{ proposta.parametros | json }}</p>
+                </div>
+              }
+            </details>
+          }
+
+          @if (message.metadata.modulo_recurso; as recurso) {
+            <div class="chat-bubble-resource">
+              <p class="chat-bubble-resource-label">Como acessar — {{ recurso.modulo }}</p>
+              @if (recurso.rota) {
+                <code>{{ recurso.rota }}</code>
+              }
+              @if (recurso.imagens.length > 0) {
+                <div class="chat-bubble-resource-images">
+                  @for (imagem of recurso.imagens; track imagem) {
+                    <a [href]="imagem" target="_blank" rel="noopener">
+                      <img [src]="imagem" alt="Como acessar {{ recurso.modulo }}" />
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    }
+
+    @if (sending()) {
+      <div class="chat-bubble chat-bubble-agent chat-bubble-loading">
+        <div class="chat-bubble-content">Analisando...</div>
+      </div>
+    }
+  </div>
+
+  <form class="chat-input-row" (ngSubmit)="send()">
+    <input
+      placeholder="Descreva o problema, como um usuário do ERP faria..."
+      [ngModel]="draft()"
+      (ngModelChange)="draft.set($event)"
+      name="draft"
+      [disabled]="sending()"
+    />
+    <button
+      class="btn"
+      type="submit"
+      [disabled]="sending() || !draft().trim() || !credenciaisCompletas()"
+    >
+      Enviar
+    </button>
+  </form>
+</div>

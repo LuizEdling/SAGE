@@ -1,0 +1,57 @@
+<app-page-header eyebrow="Atendimento" title="Conversas" />
+
+<div class="card">
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else if (items().length === 0) {
+    <app-empty-state
+      message="Nenhuma conversa registrada. As conversas do chat embutido no sistema legado aparecerão aqui."
+    />
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Usuário do sistema</th>
+          <th>Status</th>
+          <th>Mensagens</th>
+          <th>Aberta em</th>
+          <th>Última mensagem</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>
+              @if (item.erp_user; as usuario) {
+                <span
+                  class="truncate"
+                  style="max-width: 240px"
+                  [title]="usuario.name ?? usuario.login"
+                >
+                  {{ usuario.name ?? usuario.login }}
+                  <span class="mono-value">{{ usuario.login }}</span>
+                </span>
+              } @else {
+                —
+              }
+            </td>
+            <td>
+              <span class="badge status-{{ item.status }}">{{ statusLabel(item.status) }}</span>
+            </td>
+            <td class="mono-value">{{ item.message_count ?? '—' }}</td>
+            <td>{{ item.opened_at | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>
+              {{ item.last_message_at ? (item.last_message_at | date: 'dd/MM/yyyy HH:mm') : '—' }}
+            </td>
+            <td><a class="btn btn-sm btn-secondary" [routerLink]="['/conversas', item.id]">Ver</a></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (meta(); as m) {
+      <app-pagination [meta]="m" (pageChange)="goToPage($event)" />
+    }
+  }
+</div>
