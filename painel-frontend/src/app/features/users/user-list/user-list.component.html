@@ -1,0 +1,50 @@
+<app-page-header eyebrow="Segurança" title="Usuários" [showFilters]="true">
+  <a actions class="btn" routerLink="/usuarios/novo">+ Novo usuário</a>
+  <div filters class="tab-filters">
+    <a (click)="roleFilter.set(null)" [class.active]="roleFilter() === null">Todos</a>
+    <a (click)="roleFilter.set(true)" [class.active]="roleFilter() === true">Gerentes</a>
+    <a (click)="roleFilter.set(false)" [class.active]="roleFilter() === false">Usuários comuns</a>
+  </div>
+</app-page-header>
+
+<div class="card">
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else if (filteredItems().length === 0) {
+    <app-empty-state message="Nenhum usuário encontrado." />
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>E-mail</th>
+          <th>Papel</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of filteredItems(); track item.id) {
+          <tr>
+            <td><span class="truncate" style="max-width: 200px;" [title]="item.name">{{ item.name }}</span></td>
+            <td><span class="truncate" style="max-width: 220px;" [title]="item.email">{{ item.email }}</span></td>
+            <td>
+              <span class="badge" [class.role-master]="item.is_master" [class.role-user]="!item.is_master">
+                {{ item.is_master ? 'Gerente' : 'Usuário comum' }}
+              </span>
+            </td>
+            <td>{{ item.active ? 'Ativo' : 'Inativo' }}</td>
+            <td>
+              <div class="icon-actions">
+                <app-icon-edit-link [link]="['/usuarios', item.id]" />
+                @if (item.id !== currentUserId()) {
+                  <app-icon-toggle-active-button [active]="item.active" (toggle)="toggleActive(item)" />
+                }
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
