@@ -1,0 +1,118 @@
+<app-page-header eyebrow="Base de conhecimento" title="Importar conhecimento do código">
+  <a actions class="btn btn-secondary" routerLink="/conhecimentos">Voltar</a>
+</app-page-header>
+
+<div class="card">
+  <div class="tip-box">
+    <svg class="tip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+    <div>
+      <strong>O que essa tela faz</strong>
+      Em vez de cadastrar um conhecimento por vez, aqui você importa vários de uma só vez a partir do código de um
+      sistema legado. O processo tem 3 passos: copie o prompt abaixo, rode ele com uma IA de código (Claude Code,
+      Cursor, etc.) dentro do repositório do sistema legado, e envie o <code>.zip</code> com os arquivos gerados
+      no campo mais abaixo. Cada arquivo vira um conhecimento pendente, que passa pela mesma aprovação de sempre
+      antes de entrar na base do Agente.
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="tip-box">
+    <svg class="tip-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4" />
+      <path d="M12 8h.01" />
+    </svg>
+    <div>
+      <strong>Como usar o prompt</strong>
+      Copie o texto abaixo e cole numa ferramenta de IA com acesso ao código do sistema legado (Claude Code, Cursor
+      ou similar), rodando dentro da pasta do repositório. A ferramenta vai ler o código, identificar os módulos e
+      comportamentos relevantes pra suporte e treinamento (guias de telas, conceitos e fluxos, além de diagnósticos de problemas), e gerar uma pasta com um arquivo <code>.md</code> por conhecimento,
+      já pronta pra ser compactada em <code>.zip</code>. Depois é só anexar esse <code>.zip</code> no campo abaixo.
+      @if (registeredModules() > 0) {
+        O prompt já lista os <strong>{{ registeredModules() }} módulo(s)</strong> cadastrados no painel, com o
+        nome exato — assim os conhecimentos importados caem nos módulos certos, com suas rotas e imagens.
+      } @else {
+        Nenhum módulo cadastrado ainda: a IA vai identificar os módulos sozinha a partir do código. Se preferir
+        controlar os nomes, cadastre os módulos antes e volte a esta tela.
+      }
+    </div>
+  </div>
+
+  <div class="code-block-wrapper">
+    <pre class="code-block">{{ examplePrompt() }}</pre>
+    <button type="button" class="btn btn-sm btn-secondary copy-button" (click)="copyPrompt()">
+      {{ copied() ? 'Copiado!' : 'Copiar' }}
+    </button>
+  </div>
+</div>
+
+<div class="card">
+  <h3>Enviar o .zip</h3>
+
+  <div class="form-field">
+    <label for="import_file">Arquivo .zip com os conhecimentos</label>
+    <input id="import_file" type="file" accept=".zip,application/zip" (change)="onFileSelected($event)" />
+  </div>
+
+  @if (errorMessage()) {
+    <p class="field-error">{{ errorMessage() }}</p>
+  }
+
+  <div class="form-actions-spaced">
+    <button type="button" class="btn" [disabled]="uploading() || !selectedFile()" (click)="submit()">
+      {{ uploading() ? 'Importando...' : 'Importar' }}
+    </button>
+  </div>
+
+  @if (result()) {
+    <div class="form-field" style="margin-top: 1.5rem;">
+      <p>
+        <strong>{{ result()!.created }}</strong> criado(s), <strong>{{ result()!.failed }}</strong> com erro, de
+        {{ result()!.total }} arquivo(s).
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Arquivo</th>
+            <th>Módulo</th>
+            <th>Status</th>
+            <th>Detalhe</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of result()!.items; track item.file) {
+            <tr>
+              <td><span class="mono-value">{{ item.file }}</span></td>
+              <td>{{ item.modulo ?? '—' }}</td>
+              <td>
+                @if (item.status === 'created') {
+                  <span class="pill-badge">criado</span>
+                } @else {
+                  <span class="pill-badge">erro</span>
+                }
+              </td>
+              <td>
+                @if (item.message) {
+                  {{ item.message }}
+                } @else if (item.duplicates > 0) {
+                  possível duplicidade ({{ item.duplicates }})
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      <p class="field-hint">
+        Todos os conhecimentos criados entram como pendentes.
+        <a routerLink="/conhecimentos" [queryParams]="{ status: 'pendente' }">Ver pendentes</a>
+      </p>
+    </div>
+  }
+</div>
