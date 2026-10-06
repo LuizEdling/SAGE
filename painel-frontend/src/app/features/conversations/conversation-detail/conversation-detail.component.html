@@ -1,0 +1,109 @@
+<app-page-header eyebrow="Atendimento" [title]="'Conversa #' + (conversation()?.id ?? '')">
+  <a actions class="btn btn-secondary" routerLink="/conversas">Voltar</a>
+</app-page-header>
+
+@if (loading()) {
+  <div class="card"><p>Carregando...</p></div>
+} @else if (notFound()) {
+  <div class="card"><app-empty-state message="Conversa não encontrada." /></div>
+} @else if (conversation(); as c) {
+  <div class="card">
+    <dl class="conversation-facts">
+      <div>
+        <dt>Usuário do sistema</dt>
+        <dd>
+          @if (c.erp_user; as usuario) {
+            {{ usuario.name ?? usuario.login }} <span class="mono-value">{{ usuario.login }}</span>
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Perfil · Entidade</dt>
+        <dd>
+          @if (contexto(); as ctx) {
+            {{ ctx.perfil ?? '—' }} · {{ ctx.entidade ?? '—' }}
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Status</dt>
+        <dd>
+          <span class="badge status-{{ c.status }}">{{ statusLabel(c.status) }}</span>
+        </dd>
+      </div>
+      <div>
+        <dt>Aberta em</dt>
+        <dd>{{ c.opened_at | date: 'dd/MM/yyyy HH:mm' }}</dd>
+      </div>
+      <div>
+        <dt>Encerrada em</dt>
+        <dd>{{ c.closed_at ? (c.closed_at | date: 'dd/MM/yyyy HH:mm') : '—' }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="card">
+    @if (c.messages.length === 0) {
+      <app-empty-state message="Esta conversa não tem mensagens." />
+    }
+
+    <div class="conversation-transcript">
+      @for (message of c.messages; track message.id) {
+        <div
+          class="chat-bubble"
+          [class.chat-bubble-user]="message.author === 'usuario'"
+          [class.chat-bubble-agent]="message.author === 'agente'"
+        >
+          <div class="chat-bubble-content" [innerHTML]="message.content | chatText"></div>
+
+          @if (message.author === 'agente' && message.metadata; as meta) {
+            <!-- Diagnóstico interno: visível só para quem supervisiona. O relato de
+                 uma alteração não tem diagnóstico próprio. -->
+            @if (meta.confianca !== undefined) {
+              <div class="chat-bubble-meta">
+                <span class="mono-value">{{
+                  meta.modulo_afetado ?? 'Módulo não identificado'
+                }}</span>
+                <span class="mono-value"
+                  >confiança {{ meta.confianca * 100 | number: '1.0-0' }}%</span
+                >
+                @if (meta.iteracoes) {
+                  <span class="mono-value">
+                    {{ meta.iteracoes }} {{ meta.iteracoes === 1 ? 'iteração' : 'iterações' }}
+                  </span>
+                }
+                @if (meta.sustentado === false) {
+                  <span class="mono-value">recusa: material não sustenta a resposta</span>
+                }
+                @if (meta.aguardando_esclarecimento) {
+                  <span class="mono-value">pediu esclarecimento</span>
+                }
+              </div>
+            }
+
+            @if ((meta.consultas?.length ?? 0) > 1) {
+              <p class="conversation-queries">
+                Consultas do refinamento:
+                @for (consulta of meta.consultas; track $index) {
+                  <span class="mono-value">“{{ consulta }}”</span>
+                }
+              </p>
+            }
+
+            <app-evidence-trail [fontes]="meta.fontes ?? []" />
+          }
+
+          @for (execution of message.executions; track execution.id) {
+            <app-execution-card [execution]="execution" />
+          }
+
+          <time class="conversation-time">{{ message.created_at | date: 'dd/MM HH:mm' }}</time>
+        </div>
+      }
+    </div>
+  </div>
+}
