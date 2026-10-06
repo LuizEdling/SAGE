@@ -1,0 +1,264 @@
+<app-page-header eyebrow="Execução" title="Como criar funções no sistema legado">
+  <div actions class="header-actions">
+    <a class="btn btn-secondary" routerLink="/funcoes">Voltar para Funções</a>
+  </div>
+</app-page-header>
+
+<div class="card">
+  <div class="tip-box">
+    <div>
+      <strong>As funções nascem no sistema legado</strong>
+      Uma função é um pedaço de código do próprio sistema legado, que lê ou altera uma configuração
+      com as regras e os direitos dele. O painel não tem como criá-la: ele importa o que o sistema
+      legado declara e deixa o gestor aprovar, ativar e vincular cada função a um conhecimento. Esta
+      página descreve o que o painel espera, para que quem implementa saiba exatamente o que
+      entregar.
+    </div>
+  </div>
+
+  <h3>O caminho de uma função</h3>
+  <ol>
+    <li>Implemente a função no sistema legado, seguindo o contrato abaixo.</li>
+    <li>Declare a função no manifesto do sistema legado.</li>
+    <li>
+      Em Chaves de acesso, gere uma chave de execução com a URL da API do plugin, configure o hash
+      dela no sistema legado e use <strong>Testar conexão</strong>.
+    </li>
+    <li>
+      No painel, em Funções, clique em <strong>Importar do sistema legado</strong>. A função entra
+      pendente e inativa.
+    </li>
+    <li>Abra a função, confira a descrição e os parâmetros, aprove e ative.</li>
+    <li>No cadastro de um conhecimento, vincule a função. Só então o Agente pode considerá-la.</li>
+  </ol>
+</div>
+
+<div class="card">
+  <h3>O contrato da API</h3>
+  <p class="field-hint">
+    O painel chama o sistema legado em
+    <code>&#123;URL da API do plugin&#125;</code>, o endereço base onde o sistema legado responde os
+    caminhos abaixo (por exemplo, <code>https://meu-sistema.exemplo/sage/api</code>). Essa URL é
+    cadastrada em <a routerLink="/chaves-acesso">Chaves de acesso</a>, junto com a chave de execução, e o
+    botão <strong>Testar conexão</strong> confere se o plugin responde com aquela chave.
+  </p>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Método e caminho</th>
+        <th>Para quê</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono-value">GET /manifest</td>
+        <td>Devolve a lista fechada das funções. É o que o botão de importar lê.</td>
+      </tr>
+      <tr>
+        <td class="mono-value">POST /functions/&#123;code&#125;/execute</td>
+        <td>Executa uma função da lista. Código que não está na lista responde 404.</td>
+      </tr>
+      <tr>
+        <td class="mono-value">GET /ping</td>
+        <td>Opcional. Confirma que a conexão e a chave funcionam.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Autenticação</h3>
+  <p>
+    Toda requisição traz o header <code>X-Sage-Execution-Key</code> com a chave de execução criada
+    em <strong>Chaves de acesso</strong>. O sistema legado guarda só o SHA-256 dela e compara com o
+    hash da chave recebida. Sem chave configurada, rejeita tudo. Desativar a chave no painel
+    suspende toda execução.
+  </p>
+</div>
+
+<div class="card">
+  <h3>O manifesto</h3>
+  <p class="field-hint">Resposta de <code>GET /manifest</code>, com uma função de exemplo.</p>
+  <div class="code-block-wrapper">
+    <pre class="code-block">{{ manifesto }}</pre>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Campo</th>
+        <th>O que é</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono-value">code</td>
+        <td>
+          Identificador estável, no formato <code>modulo.assunto.acao</code>. Só letras minúsculas,
+          números, ponto e sublinhado.
+        </td>
+      </tr>
+      <tr>
+        <td class="mono-value">name</td>
+        <td>Nome mostrado no painel e no cartão de autorização.</td>
+      </tr>
+      <tr>
+        <td class="mono-value">description</td>
+        <td>
+          Lida pelo Agente para decidir quando usar a função. Diga quando usar e o que ela devolve.
+          Nas alterações, diga que só se usa depois de consultar e confirmar o valor.
+        </td>
+      </tr>
+      <tr>
+        <td class="mono-value">module</td>
+        <td>
+          Nome exato de um módulo já cadastrado no painel. Módulo que não existe faz a importação
+          recusar a função.
+        </td>
+      </tr>
+      <tr>
+        <td class="mono-value">operation_type</td>
+        <td>
+          <code>consulta</code> roda sozinha. <code>alteracao</code> só roda depois que o usuário
+          autoriza.
+        </td>
+      </tr>
+      <tr>
+        <td class="mono-value">parameters</td>
+        <td>
+          Lista de <code>name</code>, <code>type</code> (<code>string</code>, <code>integer</code>,
+          <code>boolean</code>, <code>date</code> em AAAA-MM-DD ou <code>float</code>),
+          <code>required</code> e <code>description</code>.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>A execução</h3>
+  <p class="field-hint">
+    Pedido enviado pelo painel a <code>POST /functions/&#123;code&#125;/execute</code>.
+  </p>
+  <div class="code-block-wrapper">
+    <pre class="code-block">{{ pedido }}</pre>
+  </div>
+  <p class="field-hint">
+    O campo <code>usuario</code> identifica quem está conversando no sistema legado. Além de
+    <code>id</code> e <code>login</code>, pode trazer <code>perfil_id</code> (perfil ou papel),
+    <code>entidade_id</code> (empresa, filial ou área a que o usuário pertence) e
+    <code>recursivo</code> (se o acesso vale também para as subáreas). Esses três são opcionais:
+    use os que fizerem sentido no seu sistema. Nas funções de alteração, o pedido também traz
+    <code>token_autorizacao</code>.
+  </p>
+
+  <h4>Resposta de uma consulta</h4>
+  <div class="code-block-wrapper">
+    <pre class="code-block">{{ respostaConsulta }}</pre>
+  </div>
+
+  <h4>Resposta de uma alteração</h4>
+  <div class="code-block-wrapper">
+    <pre class="code-block">{{ respostaAlteracao }}</pre>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>HTTP</th>
+        <th>status</th>
+        <th>Quando</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>200</td>
+        <td class="mono-value">ok</td>
+        <td>Executou.</td>
+      </tr>
+      <tr>
+        <td>401</td>
+        <td class="mono-value">nao_autorizado</td>
+        <td>Chave de execução ausente ou inválida.</td>
+      </tr>
+      <tr>
+        <td>403</td>
+        <td class="mono-value">sem_permissao</td>
+        <td>O usuário não pode, ou a alteração foi recusada pelo sistema.</td>
+      </tr>
+      <tr>
+        <td>404</td>
+        <td class="mono-value">nao_encontrado</td>
+        <td>Função fora da lista, ou item que não existe para esse usuário.</td>
+      </tr>
+      <tr>
+        <td>422</td>
+        <td class="mono-value">invalido</td>
+        <td>Parâmetro inválido ou usuário solicitante inválido.</td>
+      </tr>
+      <tr>
+        <td>500</td>
+        <td class="mono-value">erro</td>
+        <td>Falha inesperada. Não exponha detalhes internos na mensagem.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h3>Regras que toda função precisa seguir</h3>
+  <ul>
+    <li>
+      <strong>Roda com os direitos do usuário informado</strong>, nunca com os de um administrador.
+      Abra uma sessão temporária dele durante a execução.
+    </li>
+    <li>
+      <strong>Consulta nunca altera nada</strong> e devolve <code>pode_alterar</code>: se esse
+      usuário pode alterar aquela configuração, segundo a checagem de direitos do próprio sistema. É
+      o que permite ao Agente propor só o que o sistema aceita.
+    </li>
+    <li>
+      <strong>Alteração só executa com <code>token_autorizacao</code> válido</strong>: emitido pelo
+      sistema legado quando o usuário clica em Autorizar, de uso único e curta duração, ligado ao
+      usuário e à execução.
+    </li>
+    <li>
+      <strong>Confirme a alteração lendo o valor de novo</strong> e devolva <code>antes</code> e
+      <code>depois</code>. O sistema pode descartar em silêncio um campo sem direito.
+    </li>
+    <li>
+      <strong>Use as classes do próprio sistema</strong>, não SQL direto, para valerem as regras de
+      negócio e o histórico. Registre uma nota no histórico do item e uma auditoria da execução.
+    </li>
+    <li><strong>Lista fechada:</strong> execute só o que está no manifesto.</li>
+    <li>
+      <strong>Valide os parâmetros</strong> e confira que o item pertence à empresa, filial ou área
+      que o usuário pode acessar.
+    </li>
+  </ul>
+</div>
+
+<div class="card">
+  <h3>Prompt pronto para gerar as funções</h3>
+  <p>
+    Copie o texto abaixo e cole numa ferramenta de IA com acesso ao código do sistema legado (Claude
+    Code, Cursor ou similar), dentro da pasta do repositório. Ela implementa as funções e os
+    endpoints seguindo este contrato.
+    @if (registeredModules() > 0) {
+      O prompt já lista os <strong>{{ registeredModules() }} módulo(s)</strong> cadastrados no
+      painel, com o nome exato para o campo <code>module</code>.
+    } @else {
+      Nenhum módulo está cadastrado ainda. Cadastre os módulos antes e volte aqui, para o prompt
+      listar os nomes exatos.
+    }
+  </p>
+
+  <div class="code-block-wrapper">
+    <pre class="code-block">{{ prompt() }}</pre>
+    <button type="button" class="btn btn-sm btn-secondary copy-button" (click)="copyPrompt()">
+      {{ copied() ? 'Copiado!' : 'Copiar' }}
+    </button>
+  </div>
+  @if (copyError()) {
+    <p class="field-error">{{ copyError() }}</p>
+  }
+</div>
