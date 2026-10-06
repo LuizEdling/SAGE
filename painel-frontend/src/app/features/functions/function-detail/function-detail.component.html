@@ -1,0 +1,101 @@
+<app-page-header eyebrow="Execução" [title]="title()">
+  <div actions class="header-actions">
+    <a class="btn btn-secondary" routerLink="/funcoes/guia">Como criar funções</a>
+    <a class="btn btn-secondary" routerLink="/funcoes">Voltar</a>
+  </div>
+</app-page-header>
+
+@if (loading()) {
+  <div class="card"><p>Carregando...</p></div>
+} @else if (notFound()) {
+  <div class="card"><p class="field-error">Função não encontrada.</p></div>
+} @else if (fn(); as f) {
+  <div class="card">
+    <div class="tip-box">
+      <div>
+        <strong>Esta função vem do sistema legado</strong>
+        Nome, descrição e parâmetros são definidos lá e chegam pela importação. Para mudar qualquer
+        um deles, altere a função no sistema legado e importe de novo: ela volta a pendente para uma
+        nova aprovação.
+      </div>
+    </div>
+
+    <dl class="detail-grid">
+      <div>
+        <dt>Código</dt>
+        <dd class="mono-value">{{ f.code ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt>Módulo</dt>
+        <dd>{{ f.component?.name ?? '—' }}</dd>
+      </div>
+      <div>
+        <dt>Tipo de operação</dt>
+        <dd>
+          {{ typeLabel() }}
+          <span class="field-hint">
+            {{
+              f.operation_type === 'consulta'
+                ? ' · roda sozinha, sem pedir autorização'
+                : ' · só roda depois que o usuário autoriza'
+            }}
+          </span>
+        </dd>
+      </div>
+      <div>
+        <dt>Aprovação</dt>
+        <dd><app-status-badge [status]="f.status" /></dd>
+      </div>
+      <div>
+        <dt>Ativa</dt>
+        <dd>{{ f.active ? 'Sim' : 'Não' }}</dd>
+      </div>
+      @if (f.approved_by) {
+        <div>
+          <dt>Decidida por</dt>
+          <dd>{{ f.approved_by.name }}</dd>
+        </div>
+      }
+      <div class="detail-description">
+        <dt>Descrição (é o que o Agente lê)</dt>
+        <dd>{{ f.description }}</dd>
+      </div>
+    </dl>
+
+    @if (authService.isMaster() && f.status === 'pendente') {
+      <div class="form-actions-spaced">
+        <button type="button" class="btn" (click)="approve()">Aprovar</button>
+        <button type="button" class="btn btn-secondary" (click)="reject()">Reprovar</button>
+      </div>
+    }
+  </div>
+
+  <div class="card">
+    <h3>Parâmetros</h3>
+
+    @if (f.parameters.length === 0) {
+      <p class="field-hint">Esta função não recebe parâmetros.</p>
+    } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Tipo</th>
+            <th>Obrigatório</th>
+            <th>Descrição</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (parameter of f.parameters; track parameter.id) {
+            <tr>
+              <td class="mono-value">{{ parameter.name }}</td>
+              <td class="mono-value">{{ parameter.type }}</td>
+              <td>{{ parameter.required ? 'Sim' : 'Não' }}</td>
+              <td>{{ parameter.description ?? '—' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+}
