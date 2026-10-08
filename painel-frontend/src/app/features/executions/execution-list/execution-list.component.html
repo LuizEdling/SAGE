@@ -1,0 +1,99 @@
+<app-page-header eyebrow="Supervisão" title="Execuções" [showFilters]="true">
+  <div filters class="form-actions-spaced">
+    <div class="tab-filters">
+      <a (click)="setStatusFilter(undefined)" [class.active]="!statusFilter()">Todas</a>
+      <a (click)="setStatusFilter('executada')" [class.active]="statusFilter() === 'executada'"
+        >Executadas</a
+      >
+      <a (click)="setStatusFilter('pendente')" [class.active]="statusFilter() === 'pendente'"
+        >Aguardando</a
+      >
+      <a (click)="setStatusFilter('negada')" [class.active]="statusFilter() === 'negada'"
+        >Negadas</a
+      >
+      <a (click)="setStatusFilter('falhou')" [class.active]="statusFilter() === 'falhou'"
+        >Falharam</a
+      >
+    </div>
+    <select class="filter-select" aria-label="Tipo de operação" (change)="setTypeFilter($event)">
+      <option value="">Consultas e alterações</option>
+      <option value="consulta">Só consultas</option>
+      <option value="alteracao">Só alterações</option>
+    </select>
+  </div>
+</app-page-header>
+
+<div class="card">
+  @if (loading()) {
+    <p>Carregando...</p>
+  } @else if (items().length === 0) {
+    <app-empty-state
+      message="Nenhuma função do sistema legado foi executada ainda. Elas aparecem aqui quando o Agente confere ou altera uma configuração durante um atendimento."
+    />
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Data</th>
+          <th>Usuário do sistema</th>
+          <th>Função</th>
+          <th>Tipo</th>
+          <th>Status</th>
+          <th>Parâmetros</th>
+          <th>Conversa</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item.id) {
+          <tr>
+            <td>{{ item.created_at | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ item.conversation?.erp_user_login ?? '—' }}</td>
+            <td>
+              <span class="truncate" style="max-width: 260px" [title]="item.function.name">{{
+                item.function.name
+              }}</span>
+              <span class="truncate mono-value" style="max-width: 260px">{{
+                item.function.code
+              }}</span>
+            </td>
+            <td>
+              <span class="type-pill">{{ typeLabel(item.function.operation_type) }}</span>
+              @if (
+                item.function.operation_type === 'alteracao' &&
+                item.confirmed_by_user &&
+                item.status !== 'negada'
+              ) {
+                <span class="field-hint type-note">autorizada pelo usuário</span>
+              }
+            </td>
+            <td>
+              <span class="badge status-{{ item.status }}">{{ statusLabel(item.status) }}</span>
+              @if (item.error_code) {
+                <span class="field-error">{{ item.error_code }}</span>
+              }
+            </td>
+            <td>
+              <span
+                class="truncate mono-value"
+                style="max-width: 220px"
+                [title]="item.parameters | json"
+                >{{ item.parameters | json }}</span
+              >
+            </td>
+            <td>
+              @if (item.conversation) {
+                <a [routerLink]="['/conversas', item.conversation.id]"
+                  >#{{ item.conversation.id }}</a
+                >
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    @if (meta(); as m) {
+      <app-pagination [meta]="m" (pageChange)="goToPage($event)" />
+    }
+  }
+</div>
