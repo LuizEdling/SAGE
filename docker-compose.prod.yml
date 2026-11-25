@@ -1,0 +1,157 @@
+# Produção: um único servidor com Docker.
+#   cp .env.production.example .env   (e preencher)
+#   make prod-up
+# Só o Caddy publica portas (80/443). Banco, Qdrant, agente e API ficam
+# apenas na rede interna do Docker.
+name: sage-prod
+
+x-backend-env: &backend-env
+  APP_NAME: SAGE
+  APP_ENV: production
+  APP_DEBUG: "false"
+  APP_KEY: ${APP_KEY:?defina APP_KEY no .env (make prod-key)}
+  APP_URL: https://${SAGE_DOMAIN:?defina SAGE_DOMAIN no .env}
+  APP_LOCALE: pt_BR
+  LOG_CHANNEL: stderr
+  LOG_LEVEL: warning
+  DB_CONNECTION: mysql
+  DB_HOST: sage-db
+  DB_PORT: 3306
+  DB_DATABASE: ${MYSQL_DATABASE:-sage}
+  DB_USERNAME: ${MYSQL_USER:-sage}
+  DB_PASSWORD: ${MYSQL_PASSWORD:?defina MYSQL_PASSWORD no .env}
+  SESSION_DRIVER: database
+  CACHE_STORE: database
+  QUEUE_CONNECTION: database
+  SAGE_AGENT_URL: http://sage-agent:8000
+  SAGE_PUBLIC_API_URL: https://${SAGE_DOMAIN}/api/v1
+  SIMULATION_ERP_LOGIN: ${SIMULATION_ERP_LOGIN:-}
+  SIMULATION_ERP_PASSWORD: ${SIMULATION_ERP_PASSWORD:-}
+  SAGE_ADMIN_NAME: ${SAGE_ADMIN_NAME:-Gestor S.A.G.E.}
+  SAGE_ADMIN_EMAIL: ${SAGE_ADMIN_EMAIL:-}
+  SAGE_ADMIN_PASSWORD: ${SAGE_ADMIN_PASSWORD:-}
+
+services:
+  sage-caddy:
+    build:
+      context: .
+      dockerfile: docker/caddy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      sage-backend:
+        condition: service_healthy
+    environment:
+      SAGE_DOMAIN: ${SAGE_DOMAIN}
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    volumes:
+      - sage-caddy-data:/data
+      - sage-caddy-config:/config
+    networks:
+      - sage-net
+
+  sage-db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sage}
+      MYSQL_USER: ${MYSQL_USER:-sage}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?defina MYSQL_ROOT_PASSWORD no .env}
+    volumes:
+      - sage-db-data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -p\"$$MYSQL_ROOT_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    networks:
+      - sage-net
+
+  sage-backend:
+    build:
+      context: ./painel-backend
+      dockerfile: Dockerfile.prod
+    image: sage-backend:prod
+    restart: unless-stopped
+    depends_on:
+      sage-db:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+      RUN_MIGRATIONS: "true"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/up"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    volumes:
+      - sage-storage:/app/storage/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - sage-net
+
+  sage-queue:
+    image: sage-backend:prod
+    restart: unless-stopped
+    depends_on:
+      sage-db:
+        condition: service_healthy
+      sage-backend:
+        condition: service_healthy
+    environment:
+      <<: *backend-env
+    healthcheck:
+      disable: true
+    command: ["php", "artisan", "queue:work", "--tries=3", "--backoff=5", "--sleep=2", "--max-time=3600"]
+    volumes:
+      - sage-storage:/app/storage/app
+    networks:
+      - sage-net
+
+  sage-qdrant:
+    image: qdrant/qdrant:latest
+    restart: unless-stopped
+    volumes:
+      - sage-qdrant-data:/qdrant/storage
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - sage-net
+
+  sage-agent:
+    build:
+      context: ./agente-python
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      sage-qdrant:
+        condition: service_healthy
+    environment:
+      QDRANT_URL: http://sage-qdrant:6333
+      LLM_PROVIDER: ${LLM_PROVIDER:-template}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_THINKING_BUDGET: ${LLM_THINKING_BUDGET:-128}
+      SISTEMA_LEGADO_NOME: ${SISTEMA_LEGADO_NOME:-}
+    networks:
+      - sage-net
+
+networks:
+  sage-net:
+    driver: bridge
+
+volumes:
+  sage-db-data:
+  sage-qdrant-data:
+  sage-storage:
+  sage-caddy-data:
+  sage-caddy-config:

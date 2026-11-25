@@ -25,6 +25,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Em produção o Painel fica atrás do Caddy (proxy reverso). Sem isso,
+        // todo acesso pareceria vir do mesmo IP e os limites de login/chat por
+        // IP seriam compartilhados. A API não é exposta fora da rede do Docker.
+        $middleware->trustProxies(at: '*');
         $middleware->alias([
             'active' => EnsureIsActive::class,
             'master' => EnsureIsMaster::class,

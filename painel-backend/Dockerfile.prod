@@ -1,0 +1,24 @@
+# Imagem de produção da API do Painel: código e dependências dentro da imagem
+# (sem bind mount) e servidor FrankenPHP no lugar do `artisan serve`.
+
+FROM composer:2 AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader --ignore-platform-reqs
+COPY . .
+RUN composer dump-autoload --optimize --no-dev --no-scripts
+
+FROM dunglas/frankenphp:1-php8.4-alpine
+RUN install-php-extensions pdo_mysql mbstring bcmath gd zip intl exif pcntl opcache
+COPY docker/php/php.ini $PHP_INI_DIR/conf.d/99-sage.ini
+COPY docker/php/opcache.prod.ini $PHP_INI_DIR/conf.d/99-opcache.ini
+COPY docker/entrypoint.prod.sh /usr/local/bin/entrypoint.prod.sh
+RUN chmod +x /usr/local/bin/entrypoint.prod.sh
+
+WORKDIR /app
+COPY --from=vendor /app /app
+RUN rm -f .env && mkdir -p storage/app/public storage/framework/cache/data storage/framework/sessions \
+        storage/framework/views storage/logs bootstrap/cache
+
+ENTRYPOINT ["entrypoint.prod.sh"]
+CMD ["frankenphp", "php-server", "--listen", ":8000", "--root", "public/"]

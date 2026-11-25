@@ -53,6 +53,13 @@ return [
         'seed_api_url' => env('SEED_ERP_API_URL', 'http://host.docker.internal:8080/plugins/sage/api'),
     ],
 
+    // Primeiro gestor criado pelo seeder em produção (make prod-seed).
+    'sage_admin' => [
+        'name' => env('SAGE_ADMIN_NAME', 'Gestor S.A.G.E.'),
+        'email' => env('SAGE_ADMIN_EMAIL'),
+        'password' => env('SAGE_ADMIN_PASSWORD'),
+    ],
+
     'sage_chat' => [
         // Endereço da API do Painel como o SERVIDOR do sistema legado o enxerga:
         // é para onde ele manda as mensagens do chat (mostrado em Chaves de acesso).
