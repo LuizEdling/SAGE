@@ -1,0 +1,158 @@
+<div class="chat-integration">
+  <h4>Como o sistema legado usa a chave de chat</h4>
+  <p class="field-hint">
+    O chat fica dentro do sistema legado, mas as perguntas são respondidas aqui. O
+    <strong>servidor</strong> do sistema legado repassa cada mensagem do usuário para a API abaixo e
+    mostra a resposta. A chave de chat vai só no servidor: nunca a coloque no navegador.
+  </p>
+
+  <div class="integration-grid">
+    <span class="integration-label">URL da API</span>
+    <div class="integration-value">
+      <code>{{ integration()?.api_url ?? 'carregando…' }}</code>
+      <button type="button" class="btn btn-sm btn-secondary" [disabled]="!integration()" (click)="copyUrl()">
+        {{ copied() ? 'Copiado!' : 'Copiar' }}
+      </button>
+    </div>
+
+    <span class="integration-label">Autenticação</span>
+    <div class="integration-value">
+      <code>Authorization: Bearer &lt;chave de chat&gt;</code>
+    </div>
+
+    <span class="integration-label">Formato</span>
+    <div class="integration-value">
+      JSON, com <code>Accept: application/json</code>. Limite de
+      {{ integration()?.rate_limit_per_minute ?? 20 }} requisições por minuto por usuário.
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Método e caminho</th>
+        <th>Quando chamar</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono-value">POST /chat/messages</td>
+        <td>O usuário enviou uma pergunta. Abre a conversa, se não houver uma, e devolve a resposta do Agente.</td>
+      </tr>
+      <tr>
+        <td class="mono-value">GET /chat/conversations/current?erp_user_id=&#123;id&#125;</td>
+        <td>O chat foi aberto: devolve a conversa em andamento do usuário, para mostrar o histórico.</td>
+      </tr>
+      <tr>
+        <td class="mono-value">POST /chat/conversations/&#123;id&#125;/close</td>
+        <td>O usuário encerrou a conversa. Corpo: <code>&#123; "erp_user_id": 7 &#125;</code>.</td>
+      </tr>
+      <tr>
+        <td class="mono-value">POST /executions/&#123;id&#125;/authorize</td>
+        <td>O usuário clicou em Autorizar numa alteração proposta pelo Agente.</td>
+      </tr>
+      <tr>
+        <td class="mono-value">POST /executions/&#123;id&#125;/deny</td>
+        <td>O usuário recusou a alteração. Corpo: só <code>usuario_erp</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <details>
+    <summary>O que enviar em cada mensagem</summary>
+    <div class="code-block-wrapper">
+      <pre class="code-block">{{ exemploMensagem }}</pre>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Campo</th>
+          <th>O que é</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="mono-value">content</td>
+          <td>Obrigatório. O texto que o usuário digitou (até 4000 caracteres).</td>
+        </tr>
+        <tr>
+          <td class="mono-value">usuario_erp.id, login</td>
+          <td>
+            Obrigatórios. Quem está conversando, tirado da <strong>sessão autenticada</strong> do sistema
+            legado, nunca do que o navegador informa. Cada usuário tem uma conversa aberta por vez.
+          </td>
+        </tr>
+        <tr>
+          <td class="mono-value">usuario_erp.nome, perfil_id, perfil</td>
+          <td>Opcionais. Nome e perfil (papel) do usuário, para o Agente adequar a resposta ao que ele pode fazer.</td>
+        </tr>
+        <tr>
+          <td class="mono-value">usuario_erp.entidade_id, entidade, recursivo</td>
+          <td>Opcionais. Empresa, filial ou área do usuário, e se o acesso vale também para as subáreas.</td>
+        </tr>
+        <tr>
+          <td class="mono-value">usuario_erp.interface</td>
+          <td>Opcional. Qual interface do sistema ele usa (texto livre, ex.: <code>portal</code>, <code>administrativo</code>).</td>
+        </tr>
+        <tr>
+          <td class="mono-value">pagina</td>
+          <td>
+            Opcional, mas recomendado. O endereço da tela em que o usuário está quando pergunta (até 500
+            caracteres). Ajuda o Agente a entender a que parte do sistema a dúvida se refere.
+          </td>
+        </tr>
+        <tr>
+          <td class="mono-value">pagina_titulo</td>
+          <td>Opcional. O título dessa tela, como o usuário a vê (até 200 caracteres).</td>
+        </tr>
+      </tbody>
+    </table>
+  </details>
+
+  <details>
+    <summary>O que a API devolve</summary>
+    <div class="code-block-wrapper">
+      <pre class="code-block">{{ exemploResposta }}</pre>
+    </div>
+    <p class="field-hint">
+      Mostre as mensagens de <code>conversation.messages</code> em ordem. Quando uma mensagem do Agente
+      traz em <code>executions</code> uma alteração com <code>"status": "pendente"</code>, mostre
+      um cartão com o que será alterado e os botões Autorizar e Recusar. A proposta expira em
+      {{ integration()?.execution_ttl_minutes ?? 10 }} minutos (<code>expires_at</code>).
+    </p>
+  </details>
+
+  <details>
+    <summary>Autorizar ou recusar uma alteração</summary>
+    <div class="code-block-wrapper">
+      <pre class="code-block">{{ exemploAutorizar() }}</pre>
+    </div>
+    <p class="field-hint">
+      No clique em Autorizar, o próprio sistema legado emite o <code>token_autorizacao</code>: de uso
+      único, curta duração e ligado ao usuário e à execução. O painel repassa esse token na chamada da
+      função de alteração, e o sistema legado só altera se o token for válido. Assim, nenhuma alteração
+      acontece sem um clique real do usuário. A resposta traz a conversa atualizada com o resultado.
+    </p>
+  </details>
+
+  <details>
+    <summary>Erros</summary>
+    <p class="field-hint">Formato: <code>&#123; "error": &#123; "code": "...", "message": "..." &#125; &#125;</code></p>
+    <table>
+      <thead>
+        <tr>
+          <th>HTTP</th>
+          <th>Quando</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>401</td><td>Chave de chat ausente, inválida ou desativada.</td></tr>
+        <tr><td>404</td><td>Conversa ou execução que não existe, ou que é de outro usuário.</td></tr>
+        <tr><td>409</td><td>Alteração já decidida ou expirada.</td></tr>
+        <tr><td>422</td><td>Campo faltando ou inválido.</td></tr>
+        <tr><td>429</td><td>Muitas mensagens em pouco tempo. Aguarde e tente de novo.</td></tr>
+        <tr><td>502</td><td>O sistema legado não respondeu ao executar uma função.</td></tr>
+      </tbody>
+    </table>
+  </details>
+</div>
