@@ -1,0 +1,30 @@
+# SAGE_DOMAIN = domínio público (ex.: sage.seudominio.com.br): o Caddy emite e
+# renova o certificado HTTPS sozinho. Com ":80" serve só HTTP (teste local).
+{$SAGE_DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 25MB
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options SAMEORIGIN
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy sage-backend:8000
+	}
+
+	handle /storage/* {
+		reverse_proxy sage-backend:8000
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
