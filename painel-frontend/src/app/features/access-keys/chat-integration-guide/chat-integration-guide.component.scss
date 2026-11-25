@@ -1,0 +1,48 @@
+.chat-integration {
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--sage-border);
+
+  h4 {
+    margin: 0 0 0.35rem;
+  }
+
+  table {
+    margin: 1rem 0;
+  }
+
+  details {
+    margin-top: 0.75rem;
+    border: 1px solid var(--sage-border);
+    padding: 0.6rem 0.9rem;
+
+    summary {
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    &[open] summary {
+      margin-bottom: 0.75rem;
+    }
+  }
+}
+
+.integration-grid {
+  display: grid;
+  grid-template-columns: 130px 1fr;
+  gap: 0.6rem 1rem;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.integration-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.integration-value {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
